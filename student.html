@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>ระบบจัดการข้อมูลนิสิต AGI</title>
+
+<!-- 📚 LIBRARIES -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+:root {
+  --sapphire: #3C507D;
+  --royalblue: #112250;
+  --quicksand: #E0C58F;
+  --swanwing: #F5F0E9;
+  --shellstone: #D9CBC2;
+  --gold: #E0C58F;
+}
+
+/* ──────────── 🪶 โครงหลัก ──────────── */
+body {
+  font-family: "Prompt", sans-serif;
+  background: radial-gradient(circle at 10% 20%, #F5F0E9 0%, #E0C58F 35%, #D9CBC2 70%, #3C507D 110%);
+  background-size: 200% 200%;
+  animation: bgShift 25s ease infinite;
+  color: var(--royalblue);
+  margin: 0;
+  overflow-x: hidden;
+}
+@keyframes bgShift {
+  0% {background-position: 0% 50%;}
+  50% {background-position: 100% 50%;}
+  100% {background-position: 0% 50%;}
+}
+
+/* ──────────── 🌟 HEADER ──────────── */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(90deg, var(--royalblue), var(--sapphire));
+  color: var(--gold);
+  padding: 14px 28px;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.3px;
+  border-bottom: 4px solid var(--gold);
+  box-shadow: 0 6px 20px rgba(17,34,80,.35);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  text-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+#headerTitle { font-size: 20px; font-weight: 700; }
+#headerRight { display: flex; gap: 10px; }
+#headerRight button {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(224,197,143,0.5);
+  border-radius: 8px;
+  color: var(--gold);
+  font-weight: 500;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+#headerRight button:hover {
+  background: rgba(255,255,255,0.3);
+  box-shadow: 0 0 10px rgba(224,197,143,0.6);
+  transform: translateY(-1px);
+}
+
+/* ──────────── 🧭 ส่วน MAP + TABLE ──────────── */
+#dashboardSection {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 25px;
+  background: transparent;
+}
+#dashboardSection > div {
+  background: rgba(255,255,255,.92);
+  border-radius: 20px;
+  box-shadow:
+    0 4px 8px rgba(17,34,80,.1),
+    0 10px 25px rgba(17,34,80,.15),
+    inset 0 1px 1px rgba(255,255,255,.3);
+  border: 1px solid rgba(224,197,143,.5);
+  transition: all .3s ease;
+  backdrop-filter: blur(6px);
+}
+#dashboardSection > div:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 6px 14px rgba(17,34,80,.2),
+    0 10px 25px rgba(224,197,143,.25);
+}
+
+/* ──────────── 📋 TABLE ──────────── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  background: rgba(255,255,255,.95);
+  border-radius: 10px;
+  overflow: hidden;
+}
+th {
+  background: var(--royalblue);
+  color: var(--gold);
+  letter-spacing: 0.3px;
+  padding: 8px;
+}
+td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--shellstone);
+}
+tr:hover { background: rgba(224,197,143,.15); }
+
+/* ──────────── 🔘 ปุ่ม ──────────── */
+button {
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  box-shadow: 0 3px 6px rgba(17,34,80,.15);
+  transition: all .25s ease;
+  cursor: pointer;
+}
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 12px rgba(17,34,80,.25);
+}
+button.add {background: var(--royalblue); color: var(--gold);}
+button.add:hover {background: var(--sapphire);}
+button.edit {background: var(--gold); color: var(--royalblue);}
+button.del {background: var(--sapphire); color: var(--swanwing);}
+button.reset {background: var(--shellstone); color: var(--royalblue);}
+
+/* ──────────── ✏️ INPUTS ──────────── */
+input, select {
+  border: 1px solid rgba(224,197,143,.6);
+  background: rgba(255,255,255,.95);
+  border-radius: 8px;
+  padding: 5px 8px;
+  transition: all .25s ease;
+  color: var(--royalblue);
+}
+input:focus, select:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 6px rgba(224,197,143,.4);
+  outline: none;
+}
+
+/* ──────────── 🧭 MAP ──────────── */
+#map {
+  border: 2px solid var(--gold);
+  border-radius: 10px;
+}
+.mouse-position {
+  background: rgba(255,255,255,0.85);
+  border: 1px solid rgba(224,197,143,0.6);
+  border-radius: 6px;
+  padding: 2px 6px;
+  color: #112250;
+  font-size: 11.5px;
+  box-shadow: 0 1px 3px rgba(17,34,80,0.15);
+  transition: all 0.3s ease;
+}
+.mouse-position:hover {
+  background: rgba(255,255,255,0.95);
+  transform: scale(1.03);
+}
+
+/* ──────────── 🌟 CHART SECTION (เวอร์ชันหรู) ──────────── */
+#chartSection {
+  position: relative;
+  display: flex;
+  justify-content: space-around;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 25px;
+  padding: 50px 35px;
+  border-top: 3px solid var(--gold);
+  background: linear-gradient(135deg, #f9f6ef 0%, #ece8dd 45%, #f4efe6 100%);
+  box-shadow: inset 0 5px 15px rgba(17,34,80,0.08);
+  overflow: hidden;
+}
+#chartSection > div {
+  background: rgba(255,255,255,0.92);
+  border-radius: 20px;
+  border: 1px solid rgba(224,197,143,0.45);
+  box-shadow:
+    0 4px 10px rgba(17,34,80,0.15),
+    inset 0 1px 1px rgba(255,255,255,0.4);
+  flex: 1 1 350px;
+  min-width: 320px;
+  max-width: 440px;
+  padding: 15px 20px;
+  transition: all 0.4s ease;
+  backdrop-filter: blur(4px);
+  position: relative;
+}
+#chartSection > div:hover {
+  transform: translateY(-6px);
+  box-shadow:
+    0 8px 18px rgba(17,34,80,0.25),
+    0 0 10px rgba(224,197,143,0.35);
+}
+#chartSection h3 {
+  background: linear-gradient(90deg, rgba(224,197,143,0.25), rgba(255,255,255,0));
+  border-radius: 10px;
+  padding: 8px 0;
+  font-weight: 600;
+  color: var(--royalblue);
+  text-align: center;
+  text-shadow: 0 1px 1px rgba(255,255,255,0.8);
+  margin-bottom: 12px;
+  border-bottom: 1.5px solid rgba(224,197,143,0.4);
+}
+#chartSection canvas {
+  background: radial-gradient(circle at 30% 30%, #ffffff 0%, #fdfcf8 80%);
+  border-radius: 12px;
+  box-shadow: 0 3px 8px rgba(17,34,80,0.12);
+  padding: 8px;
+  transition: 0.3s ease;
+}
+#chartSection canvas:hover {
+  transform: scale(1.02);
+  box-shadow: 0 6px 16px rgba(17,34,80,0.25);
+}
+#chartSection::before {
+  content: "";
+  position: absolute;
+  top: -80px;
+  left: -80px;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(224,197,143,0.25) 0%, transparent 70%);
+  filter: blur(80px);
+  animation: floatGlow 12s ease-in-out infinite alternate;
+}
+#chartSection::after {
+  content: "";
+  position: absolute;
+  bottom: -60px;
+  right: -60px;
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle, rgba(60,80,125,0.25) 0%, transparent 70%);
+  filter: blur(90px);
+  animation: floatGlow 14s ease-in-out infinite alternate-reverse;
+}
+@keyframes floatGlow {
+  0% { transform: translateY(0px) scale(1); opacity: 0.5; }
+  50% { transform: translateY(20px) scale(1.05); opacity: 0.8; }
+  100% { transform: translateY(0px) scale(1); opacity: 0.5; }
+}
+
+/* ──────────── 🎞️ Animation Fade ──────────── */
+@keyframes fadeInUp {
+  from {opacity: 0; transform: translateY(12px);}
+  to {opacity: 1; transform: translateY(0);}
+}
+#dashboardSection > div, #chartSection > div {
+  animation: fadeInUp .8s ease both;
+}
+</style>
+
+<!-- 🌈 END AGI DASHBOARD THEME -->
+
+
+</head>
+
+<body>
+<header>
+  <!-- 🔶 ชื่อระบบ -->
+  <div id="headerTitle">📍 ระบบจัดการข้อมูลนิสิต AGI</div>
+
+  <!-- 🔷 ปุ่มด้านขวา -->
+  <div id="headerRight">
+  <button onclick="goToTour()">🏝️ สถานที่ท่องเที่ยว</button>
+  <button onclick="goToAbout()">📘 แนะนำตัว</button>
+  <button class="logout" onclick="logout()">🚪 ออกจากระบบ</button>
+</div>
+
+</header>
+
+<!-- 🔷 กล่องหลัก Map + Table -->
+<div id="dashboardSection" style="
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 20px;
+  background: #f4f6f9;
+">
+
+  <!-- 🗺️ กล่องแผนที่ -->
+  <div style="
+    flex: 1 1 30%;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    padding: 10px;
+  ">
+    <h3 style="margin:10px 0;color:#0b5394;text-align:center;">🗺️ แผนที่นิสิต</h3>
+    <div id="map" style="width:100%;height:500px;border-radius:8px;"></div>
+  </div>
+
+  <!-- 📋 กล่องตาราง -->
+  <div style="
+    flex: 1 1 50%;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    padding: 10px;
+    max-height: 550px;
+    overflow:auto;
+  ">
+    <h3 style="margin:10px 0;color:#0b5394;text-align:center;">📋 ข้อมูลนิสิต</h3>
+
+    <!-- ตัวกรองและค้นหา -->
+    <form id="filter">
+      <input type="text" id="keyword" placeholder="🔍 ค้นหาชื่อ จังหวัด อำเภอ หรือตำบล..." 
+        style="flex:2; padding:6px; border:1px solid #cbd5e1; border-radius:6px;">
+      <select id="batch" style="min-width:80px;">
+        <option value="">ทั้งหมด</option>
+        <option>64</option><option>65</option><option>66</option><option>67</option>
+      </select>
+      <select id="department" style="min-width:100px;">
+        <option value="">หลักสูตร</option>
+      </select>
+      <select id="province"><option value="">จังหวัด</option></select>
+      <select id="amphoe"><option value="">อำเภอ</option></select>
+      <select id="tambon"><option value="">ตำบล</option></select>
+    </form>
+
+    <p id="resultCount" style="margin:6px 0;color:#555;font-size:14px;"></p>
+
+    <button class="add" id="addBtn">➕ เพิ่มข้อมูลใหม่</button>
+    <button class="reset" id="resetBtn" style="background:#f59e0b;color:white;margin-left:6px;">🔄 รีเซ็ต</button>
+
+    <table style="width:100%;border-collapse:collapse;margin-top:10px;background:#fff">
+      <thead>
+        <tr style="background:#e5eefc;">
+          <th>ลำดับ</th>
+          <th>รหัสนิสิต</th>
+          <th>ชื่อ–นามสกุล</th>
+          <th>คณะ</th>
+          <th>ภาควิชา</th>
+          <th>หลักสูตร</th>
+          <th>โรงเรียน</th>
+          <th>ตำบล</th>
+          <th>อำเภอ</th>
+          <th>จังหวัด</th>
+          <th>จัดการ</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+
+<div id="chartSection" style="display:flex;justify-content:space-around;align-items:stretch;flex-wrap:wrap;gap:20px;padding:20px;background:#f9fafb;border-top:3px solid #ccc;">
+
+    <div style="flex:1 1 350px;min-width:320px;max-width:450px;background:white;padding:10px 15px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+    <h3 style="text-align:center;color:#0b5394;">🎓 จำนวนนิสิตตามชั้นปีการศึกษา</h3>
+    <canvas id="yearChart" height="180"></canvas>
+  </div>
+
+  <div style="flex:1 1 350px;min-width:320px;max-width:450px;background:white;padding:10px 15px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+    <h3 style="text-align:center;color:#0b5394;">📊 สัดส่วนนิสิตตามหลักสูตร</h3>
+    <canvas id="pieChart" height="180"></canvas>
+  </div>
+
+  <div style="flex:1 1 500px;min-width:380px;max-width:600px;background:white;padding:10px 15px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+    <h3 style="text-align:center;color:#0b5394;">📈 จังหวัดที่มีนิสิตมากสุด</h3>
+    <canvas id="barChart" height="200"></canvas>
+  </div>
+
+</div>
+
+
+<script>
+const api = "student_api.php";
+let map = L.map('map').setView([16.5, 100.3], 7);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution:'&copy; OpenStreetMap contributors'
+}).addTo(map);
+let layerGroup = L.layerGroup().addTo(map);
+let mapMarkers = {}; // เก็บ marker ของนิสิตแต่ละคน (key = s_id)
+
+
+/* กล่องพิกัดเมาส์ */
+const mousePositionDiv = L.control({ position: 'bottomleft' });
+mousePositionDiv.onAdd = function () { this._div = L.DomUtil.create('div', 'mouse-position'); this.update(); return this._div; };
+mousePositionDiv.update = function (latlng) {
+  this._div.innerHTML = latlng ? "📍 <b>Lat:</b> " + latlng.lat.toFixed(5) + " , <b>Lon:</b> " + latlng.lng.toFixed(5) : "เลื่อนเมาส์เพื่อดูพิกัด";
+};
+mousePositionDiv.addTo(map);
+map.on('mousemove', e => mousePositionDiv.update(e.latlng));
+
+/* โหลดจังหวัดทั้งหมด */
+async function loadDropdowns() {
+  const res = await fetch(`${api}?type=province_all`);
+  const items = await res.json();
+  province.innerHTML = '<option value="">จังหวัด</option>';
+  items.forEach(p => {
+    const o = document.createElement('option');
+    o.value = p.value; o.textContent = p.value;
+    province.appendChild(o);
+  });
+}
+
+/* โหลด dropdown สาขา */
+async function loadDepartments() {
+  const res = await fetch(`${api}?type=department_all&batch=${batch.value}`);
+  const items = await res.json();
+  department.innerHTML = '<option value="">หลักสูตร</option>';
+  items.forEach(d => {
+    const o = document.createElement('option');
+    o.value = d.value;
+    o.textContent = d.value;
+    department.appendChild(o);
+  });
+}
+
+
+
+
+/* Cascading Dropdown */
+province.addEventListener('change', async ()=>{
+  amphoe.innerHTML = '<option value="">อำเภอ</option>';
+  tambon.innerHTML = '<option value="">ตำบล</option>';
+  if(province.value){
+    const data = await fetch(`${api}?type=amphoe&province=${encodeURIComponent(province.value)}&batch=${batch.value}`).then(r=>r.json());
+    data.forEach(a=>{
+      const o=document.createElement('option'); o.value=a.value; o.textContent=a.value; amphoe.appendChild(o);
+    });
+  }
+});
+amphoe.addEventListener('change', async ()=>{
+  tambon.innerHTML = '<option value="">ตำบล</option>';
+  if(amphoe.value){
+    const data = await fetch(`${api}?type=tambon&amphoe=${encodeURIComponent(amphoe.value)}&batch=${batch.value}`).then(r=>r.json());
+    data.forEach(t=>{
+      const o=document.createElement('option'); o.value=t.value; o.textContent=t.value; tambon.appendChild(o);
+    });
+  }
+});
+batch.addEventListener('change', ()=>{
+  province.innerHTML = '<option value="">จังหวัด</option>';
+  amphoe.innerHTML   = '<option value="">อำเภอ</option>';
+  tambon.innerHTML   = '<option value="">ตำบล</option>';
+  
+  loadDropdowns();   // โหลดจังหวัดใหม่
+  loadDepartments(); // โหลดหลักสูตรใหม่ตามปี
+});
+
+
+/* ===== Helper: เติมแถวในตารางต่อท้าย ===== */
+function appendRowToTable(p, idx) {
+  const tr = document.createElement('tr');
+  tr.id = `row-${p.s_id}`;
+  tr.innerHTML = `
+    <td>${idx}</td>
+    <td>${p.s_id || '-'}</td>
+    <td class="student-name" style="color:#0b5394;cursor:pointer;text-decoration:underline"
+        onclick="focusStudent('${p.s_id}')">${p.s_name || '-'}</td>
+    <td>${p.faculty || '-'}</td>
+    <td>${p.department || '-'}</td>
+    <td>${p.curriculum || '-'}</td>
+    <td>${p.school || '-'}</td>
+    <td>${p.tambon || '-'}</td>
+    <td>${p.amphoe || '-'}</td>
+    <td>${p.province || '-'}</td>
+    <td>
+      <button class="edit" onclick='openEdit(${JSON.stringify(p)}, ${JSON.stringify([p.lon ?? 0, p.lat ?? 0])})'>แก้ไข</button>
+      <button class="del" onclick='delData("${p.batch}", "${p.s_id}")'>ลบ</button>
+    </td>`;
+  tableBody.appendChild(tr);
+}
+
+
+/* โหลดข้อมูลทั้งหมด + วาดจุด + เติมตาราง */
+async function loadData() {
+  // ✅ เคลียร์ข้อมูลเก่าทุกครั้ง ป้องกัน marker ซ้อน / ข้อมูลซ้ำ
+  layerGroup.clearLayers();
+  tableBody.innerHTML = '';
+  resultCount.textContent = '';
+
+  const params = new URLSearchParams({
+  keyword: keyword.value.trim(),
+  batch: batch.value,
+  department: department.value,
+  province: province.value,
+  amphoe: amphoe.value,
+  tambon: tambon.value
+});
+
+  const res = await fetch(`${api}?${params}`);
+  const data = await res.json();
+
+  let count = 0;
+  const bounds = [];
+
+  if (!data.features || data.features.length === 0) {
+    resultCount.textContent = 'ไม่พบข้อมูล';
+    map.setView([16.5,100.3],7);
+    return;
+  }
+
+  const coordGroups = {};
+  data.features.forEach(f => {
+    const g = f.geometry;
+    if (!g || !g.coordinates) return;
+    const key = g.coordinates.join(',');
+    if (!coordGroups[key]) coordGroups[key] = [];
+    coordGroups[key].push(f);
+  });
+
+  let index = 0;
+  Object.values(coordGroups).forEach(group => {
+    const base = group[0].geometry.coordinates;
+    const n = group.length;
+    const offset = 0.00025;
+    group.forEach((f, i) => {
+      const angle = (2 * Math.PI * i) / n;
+      const lat = base[1] + Math.sin(angle) * offset;
+      const lon = base[0] + Math.cos(angle) * offset;
+      const p = f.properties;
+
+    // 🧭 สร้าง icon ตามปีนิสิต
+// 🧭 สร้าง icon ตามปีนิสิต
+const batch = p.batch ? p.batch.toString() : "67";
+
+let iconUrl;
+switch(batch) {
+  case "64": iconUrl = "data/images/a.png"; break; // 🔶 ปี 64 (A)
+  case "65": iconUrl = "data/images/b.png"; break; // 🔷 ปี 65 (B)
+  case "66": iconUrl = "data/images/c.png"; break; // 🔴 ปี 66 (C)
+  case "67": iconUrl = "data/images/d.png"; break; // 🟡 ปี 67 (D)
+  default:   iconUrl = "data/images/a.png";
+}
+
+
+const studentIcon = L.icon({
+  iconUrl: iconUrl,
+  iconSize: [36, 36],     // ขนาด icon
+  iconAnchor: [18, 36],   // จุดยึด (กลางล่าง)
+  popupAnchor: [0, -28]   // จุดที่ popup จะโผล่
+});
+
+// เพิ่ม marker ด้วย icon
+const m = L.marker([lat, lon], { icon: studentIcon });
+m.bindPopup(popupHTML(p, [lon, lat])).addTo(layerGroup);
+mapMarkers[p.s_id] = m;
+bounds.push([lat, lon]);
+index++; count++;
+appendRowToTable(p, index);
+
+
+
+
+      m.bindPopup(popupHTML(p, [lon, lat])).addTo(layerGroup);
+      bounds.push([lat, lon]);
+      mapMarkers[p.s_id] = m;
+
+
+      index++; count++;
+      appendRowToTable(p, index);
+    });
+  });
+
+  resultCount.textContent = `พบข้อมูล ${count} รายการ`;
+  if (bounds.length > 0) map.fitBounds(bounds, { padding:[30,30] });
+  else map.setView([16.5,100.3],7);
+  
+  updateCharts(data);
+
+}
+
+
+/* Popup ฟอร์มแก้ไข */
+function popupHTML(p, coord) {
+  return `
+    <div style="min-width:240px">
+      <b>${p.s_name || '-'}</b><br>
+      จังหวัด: ${p.province || '-'}<br>อำเภอ: ${p.amphoe || '-'}<br>ตำบล: ${p.tambon || '-'}<br>
+      <div style="margin-top:6px">
+        <button class="edit" onclick='openEdit(${JSON.stringify(p)}, ${JSON.stringify(coord)})'>✏️ แก้ไข</button>
+        <button class="del" onclick='delData("${p.batch}", "${p.s_id}")'>🗑️ ลบ</button>
+      </div>
+    </div>`;
+}
+
+/* CRUD เดิม */
+function openEdit(p={},coord=[100.3,16.5]) {
+  const isNew = !p.s_id; // ตรวจว่าเป็นเพิ่มใหม่หรือไม่
+  const html = `
+    <h4 style="margin:0 0 6px 0">${isNew ? 'เพิ่มข้อมูลใหม่' : 'แก้ไขข้อมูล'}</h4>
+    ${isNew ? `
+      <label>Lat</label><input id="e_lat" value="${coord[1].toFixed(6)}"><br>
+      <label>Lon</label><input id="e_lon" value="${coord[0].toFixed(6)}"><br>
+    ` : ''}
+    <label>ปี</label><input id="e_batch" value="${p.batch||''}"><br>
+    <label>รหัส</label><input id="e_sid" value="${p.s_id||''}"><br>
+    <label>ชื่อ</label><input id="e_name" value="${p.s_name||''}"><br>
+    <label>คณะ</label><input id="e_faculty" value="${p.faculty||''}"><br>
+    <label>ภาควิชา</label><input id="e_dept" value="${p.department||''}"><br>
+    <label>หลักสูตร</label><input id="e_cur" value="${p.curriculum||''}"><br>
+    <label>โรงเรียน</label><input id="e_school" value="${p.school||''}"><br>
+    <label>ตำบล</label><input id="e_tambon" value="${p.tambon||''}"><br>
+    <label>อำเภอ</label><input id="e_amphoe" value="${p.amphoe||''}"><br>
+    <label>จังหวัด</label><input id="e_province" value="${p.province||''}"><br>
+    <div style="margin-top:8px;text-align:right">
+      <button class="edit" onclick='saveData(${JSON.stringify(coord)})'>💾 บันทึก</button>
+    </div>`;
+  L.popup({maxWidth:320}).setLatLng([coord[1],coord[0]]).setContent(html).openOn(map);
+}
+
+
+async function saveData(coord){
+  const payload = {
+    batch:e_batch.value.trim(),
+    s_id:e_sid.value.trim(),
+    s_name:e_name.value.trim(),
+    faculty:e_faculty.value.trim(),
+    department:e_dept.value.trim(),
+    curriculum:e_cur.value.trim(),
+    school:e_school.value.trim(),
+    tambon:e_tambon.value.trim(),
+    amphoe:e_amphoe.value.trim(),
+    province:e_province.value.trim(),
+    lon:coord[0], lat:coord[1]
+  };
+  const res = await fetch(api,{method:'POST',body:JSON.stringify(payload)});
+  const out = await res.json();
+  if(out.ok){ alert('บันทึกสำเร็จ'); loadData(); map.closePopup(); }
+  else alert('❌ บันทึกไม่สำเร็จ');
+}
+
+async function delData(batchVal,sid){
+  if(!confirm('ยืนยันการลบข้อมูลนี้?'))return;
+  const res = await fetch(`${api}?batch=${encodeURIComponent(batchVal)}&s_id=${encodeURIComponent(sid)}`,{method:'DELETE'});
+  const out = await res.json();
+  if(out.ok){ alert('ลบสำเร็จ'); loadData(); }
+  else alert('❌ ลบไม่สำเร็จ');
+}
+
+/* Events */
+['batch','department','province','amphoe','tambon'].forEach(id=>{
+  document.getElementById(id).addEventListener('change', loadData);
+});
+
+keyword.addEventListener('input', ()=>{
+  if(keyword.value.trim().length >= 2 || keyword.value.trim() === '') loadData();
+});
+document.getElementById('addBtn').onclick = ()=>openAddForm();
+document.getElementById('resetBtn').onclick = () => {
+  keyword.value = '';
+  batch.value = '';
+  department.innerHTML = '<option value="">หลักสูตร</option>';
+  province.innerHTML = '<option value="">จังหวัด</option>';
+  amphoe.innerHTML = '<option value="">อำเภอ</option>';
+  tambon.innerHTML = '<option value="">ตำบล</option>';
+
+  // 🔹 เคลียร์ marker และตารางทั้งหมด
+  layerGroup.clearLayers();
+  tableBody.innerHTML = '';
+  resultCount.textContent = '';
+
+  // 🔹 โหลด dropdown จังหวัด/หลักสูตรใหม่ (ไม่โหลดข้อมูลนิสิต)
+  loadDropdowns();
+  loadDepartments();
+
+  // 🔹 รีเซ็ตแผนที่ให้มุมมองประเทศไทย
+  map.setView([16.5, 100.3], 7);
+};
+
+
+
+
+/* Select2 + เริ่มต้น */
+$(document).ready(function(){
+  $('#province,#amphoe,#tambon').select2({ placeholder:'พิมพ์เพื่อค้นหา...', allowClear:true, width:'resolve' });
+  loadDropdowns();
+  loadDepartments();
+  setTimeout(() => loadData(), 300);
+});
+
+/* ✅ SEARCH BY DISTANCE (แก้สมบูรณ์ ป้องกันดับเบิลคลิก) */
+let showpoint = L.geoJSON();
+let marker_arr = [];
+let circleLayer = null;
+
+map.on("click", function(e) {
+  if (e.originalEvent && e.originalEvent.detail === 2) return; // ป้องกัน dblclick
+
+  marker_arr.forEach(m => map.removeLayer(m));
+  if (showpoint) map.removeLayer(showpoint);
+  if (circleLayer) map.removeLayer(circleLayer);
+  marker_arr = [];
+
+  tableBody.innerHTML = '';
+  resultCount.textContent = '';
+
+  let ct = "<center><h3>Search By Distance</h3></center>";
+  ct += "Lat: <input type='number' id='lat' value='" + e.latlng.lat + "'><br>";
+  ct += "Lng: <input type='number' id='lng' value='" + e.latlng.lng + "'><br>";
+  ct += "Distance (m): <input type='number' id='distance' placeholder='เช่น 20000'><br><br>";
+  ct += "<center><button onclick='sendtodb()'>Submit</button></center>";
+
+  const marker = L.marker(e.latlng).addTo(map).bindPopup(ct).openPopup();
+  marker_arr.push(marker);
+
+  marker.on("popupclose", function() {
+    map.removeLayer(marker);
+    if (circleLayer) map.removeLayer(circleLayer);
+    if (showpoint) map.removeLayer(showpoint);
+    marker_arr = [];
+    circleLayer = null;
+    showpoint = L.geoJSON();
+    tableBody.innerHTML = '';
+    resultCount.textContent = '';
+  });
+});
+
+function sendtodb() {
+  const lat = parseFloat(document.getElementById("lat").value);
+  const lng = parseFloat(document.getElementById("lng").value);
+  const distance = parseFloat(document.getElementById("distance").value);
+
+  if (showpoint) map.removeLayer(showpoint);
+  if (circleLayer) map.removeLayer(circleLayer);
+
+  circleLayer = L.circle([lat, lng], {
+    radius: distance, color: "#ff0000", fillColor: "#ff6666", fillOpacity: 0.2
+  }).addTo(map);
+
+  fetch(`query_distance.php?lat=${lat}&lng=${lng}&distance=${distance}`)
+    .then(res => res.json())
+    .then(data => {
+      showpoint = L.geoJSON(data, {
+        onEachFeature: (f, layer) => {
+          const p = f.properties;
+          layer.bindPopup(`<b>${p.s_name || 'ไม่ระบุชื่อ'}</b><br>
+                           จังหวัด: ${p.province}<br>
+                           อำเภอ: ${p.amphoe}<br>
+                           ตำบล: ${p.tambon}`);
+        }
+      }).addTo(map);
+
+      tableBody.innerHTML = '';
+      let index = 0;
+      (data.features || []).forEach(f => {
+        const p = f.properties; index++;
+        appendRowToTable(p, index);
+      });
+
+      resultCount.textContent = `พบข้อมูล ${data.features?.length || 0} รายการ ในรัศมี ${distance.toLocaleString()} เมตร`;
+      map.fitBounds(circleLayer.getBounds());
+    })
+    .catch(err => console.error(err));
+}
+
+/* ========================== 📍 INSERT / DELETE POINT ========================== */
+let insertMarker = null;
+map.doubleClickZoom.disable();
+
+map.on("dblclick", function (e) {
+  if (insertMarker) map.removeLayer(insertMarker);
+
+  let ct = `
+    <center><h3>เพิ่มข้อมูลนิสิตใหม่</h3></center>
+    Lat: <input type='number' id='ilat' value='${e.latlng.lat}'><br>
+    Lng: <input type='number' id='ilng' value='${e.latlng.lng}'><br>
+    รหัสนิสิต: <input type='text' id='iid'><br>
+    ชื่อ–นามสกุล: <input type='text' id='iname'><br>
+    คณะ: <input type='text' id='ifac'><br>
+    ภาควิชา: <input type='text' id='idept'><br>
+    หลักสูตร: <input type='text' id='icur'><br>
+    โรงเรียน: <input type='text' id='ischool'><br>
+    ตำบล: <input type='text' id='itambon'><br>
+    อำเภอ: <input type='text' id='iamphoe'><br>
+    จังหวัด: <input type='text' id='iprov'><br><br>
+    <center>
+      <button onclick='inserttodb()' style="background:#16a34a;color:white;border:none;border-radius:4px;padding:6px 12px;">💾 บันทึก</button>
+      <button onclick='cancelInsert()' style="background:#dc2626;color:white;border:none;border-radius:4px;padding:6px 12px;">🗑️ ยกเลิก</button>
+    </center>
+  `;
+
+  insertMarker = L.marker(e.latlng)
+    .addTo(map)
+    .bindPopup(ct)
+    .openPopup();
+
+  insertMarker.on("popupclose", function () {
+    if (insertMarker) {
+      map.removeLayer(insertMarker);
+      insertMarker = null;
+    }
+  });
+});
+
+function cancelInsert() {
+  if (insertMarker) { map.removeLayer(insertMarker); insertMarker = null; }
+}
+
+async function inserttodb() {
+  const sid = document.getElementById("iid").value.trim();
+  const yearPrefix = sid.substring(0, 2);
+  const batchAuto = ["64", "65", "66", "67"].includes(yearPrefix) ? yearPrefix : "67";
+
+  const payload = {
+    batch: batchAuto,
+    s_id: sid,
+    s_name: document.getElementById("iname").value.trim(),
+    faculty: document.getElementById("ifac").value.trim(),
+    department: document.getElementById("idept").value.trim(),
+    curriculum: document.getElementById("icur").value.trim(),
+    school: document.getElementById("ischool").value.trim(),
+    tambon: document.getElementById("itambon").value.trim(),
+    amphoe: document.getElementById("iamphoe").value.trim(),
+    province: document.getElementById("iprov").value.trim(),
+    lon: parseFloat(document.getElementById("ilng").value),
+    lat: parseFloat(document.getElementById("ilat").value)
+  };
+
+  try {
+    const res = await fetch("student_api.php", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      cache: "no-store"
+    });
+    const out = await res.json();
+
+    if (out.ok) {
+      alert(`✅ เพิ่มข้อมูลนิสิตปี ${batchAuto} สำเร็จ (บันทึกใน agi_${batchAuto})`);
+      map.closePopup();
+
+      // ✅ marker ใหม่
+      const marker = L.circleMarker([payload.lat, payload.lon], {
+        radius: 7,
+        fillColor: "#16a34a",
+        color: "#065f46",
+        weight: 2,
+        fillOpacity: 0.9
+      }).addTo(layerGroup);
+
+      marker.bindPopup(`
+        <b>${payload.s_name}</b><br>
+        รหัสนิสิต: ${payload.s_id}<br>
+        จังหวัด: ${payload.province}<br>
+        อำเภอ: ${payload.amphoe}<br>
+        ตำบล: ${payload.tambon}<br>
+        <button class="del" onclick='deleteInserted("${payload.batch}", "${payload.s_id}")'>🗑️ ลบ</button>
+      `);
+
+      // ✅ เปลี่ยน batch filter ให้ตรงกับปีที่เพิ่ม
+      batch.value = batchAuto;
+
+      // ✅ โหลดข้อมูลใหม่ของปีนั้นโดยตรง
+      await loadData();
+
+      // ✅ highlight แถวที่เพิ่งเพิ่ม
+      const tbody = document.getElementById("tableBody");
+      const rows = Array.from(tbody.querySelectorAll("tr"));
+      const newRow = rows.find(r => r.children[1]?.innerText === sid);
+      if (newRow) {
+        newRow.style.background = "#dcfce7";
+        newRow.scrollIntoView({ behavior: "smooth", block: "center" });
+        setTimeout(() => (newRow.style.background = ""), 1500);
+      }
+
+      insertMarker = null;
+      map.closePopup();
+
+    } else {
+      alert("❌ บันทึกไม่สำเร็จ");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("⚠️ เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์");
+  }
+}
+
+
+/* ลบออกจาก PostgreSQL + ลบจุด + ลบแถวในตาราง */
+function deleteInserted(batchVal, sid) {
+  if (!confirm("แน่ใจหรือไม่ว่าต้องการลบข้อมูลนี้?")) return;
+
+  fetch(`student_api.php?batch=${encodeURIComponent(batchVal)}&s_id=${encodeURIComponent(sid)}`, {
+    method: "DELETE"
+  })
+  .then(res => res.json())
+  .then(out => {
+    if (!out.ok) { alert("❌ ลบข้อมูลไม่สำเร็จ"); return; }
+
+    alert("🗑️ ลบข้อมูลออกจากฐานข้อมูลสำเร็จ");
+
+    map.eachLayer(layer => {
+      if (layer instanceof L.CircleMarker && layer.getPopup()) {
+        const content = layer.getPopup().getContent() || "";
+        if (content.includes(sid)) { map.removeLayer(layer); }
+      }
+    });
+
+    const row = document.getElementById(`row-${sid}`);
+    if (row) row.remove();
+
+    const left = document.querySelectorAll("#tableBody tr").length;
+    resultCount.textContent = `พบข้อมูล ${left} รายการ`;
+
+    map.closePopup();
+  })
+  .catch(err => console.error(err));
+}
+/* ✅ คลิกบนแผนที่เพื่ออัปเดต Lat/Lon ในฟอร์มเพิ่มข้อมูลใหม่ */
+map.on("click", function (e) {
+  const latBox = document.getElementById("e_lat");
+  const lonBox = document.getElementById("e_lon");
+  if (latBox && lonBox) {
+    latBox.value = e.latlng.lat.toFixed(6);
+    lonBox.value = e.latlng.lng.toFixed(6);
+  }
+});
+
+function focusStudent(sid) {
+  const marker = mapMarkers[sid];
+  if (marker) {
+    map.setView(marker.getLatLng(), 10, { animate: true });
+    marker.openPopup();
+
+    // ไฮไลต์แถวในตาราง
+    document.querySelectorAll('#tableBody tr').forEach(r => r.style.background = '');
+    const row = document.getElementById(`row-${sid}`);
+    if (row) {
+      row.style.background = '#e0f2fe';
+      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  } else {
+    alert("❌ ไม่พบตำแหน่งนิสิตคนนี้บนแผนที่");
+  }
+}
+
+// 🧩 Popup ฟอร์มเพิ่มข้อมูลใหม่ (แบบกรอกพิกัดเอง)
+function openAddForm() {
+  const html = `
+    <h4 style="margin:0 0 6px 0">➕ เพิ่มข้อมูลใหม่</h4>
+    <label>ปี</label>
+    <select id="add_batch">
+      <option value="64">64</option>
+      <option value="65">65</option>
+      <option value="66">66</option>
+      <option value="67" selected>67</option>
+    </select><br>
+    <label>Lat</label><input id="add_lat" type="number" placeholder="เช่น 18.7870"><br>
+    <label>Lon</label><input id="add_lon" type="number" placeholder="เช่น 98.9850"><br>
+    <label>รหัสนิสิต</label><input id="add_sid" type="text"><br>
+    <label>ชื่อ–นามสกุล</label><input id="add_name" type="text"><br>
+    <label>คณะ</label><input id="add_fac" type="text"><br>
+    <label>ภาควิชา</label><input id="add_dept" type="text"><br>
+    <label>หลักสูตร</label><input id="add_cur" type="text"><br>
+    <label>โรงเรียน</label><input id="add_school" type="text"><br>
+    <label>ตำบล</label><input id="add_tambon" type="text"><br>
+    <label>อำเภอ</label><input id="add_amphoe" type="text"><br>
+    <label>จังหวัด</label><input id="add_province" type="text"><br>
+    <div style="margin-top:8px;text-align:right">
+      <button class="edit" onclick="saveAddForm()">💾 บันทึก</button>
+    </div>`;
+  
+  // popup แสดงกลางแผนที่
+  const c = map.getCenter();
+  L.popup({ maxWidth: 320 })
+    .setLatLng([c.lat, c.lng])
+    .setContent(html)
+    .openOn(map);
+}
+
+
+// 💾 ฟังก์ชันบันทึกข้อมูลที่กรอกใหม่
+async function saveAddForm() {
+  const payload = {
+    batch: document.getElementById("add_batch").value.trim(),
+    s_id: document.getElementById("add_sid").value.trim(),
+    s_name: document.getElementById("add_name").value.trim(),
+    faculty: document.getElementById("add_fac").value.trim(),
+    department: document.getElementById("add_dept").value.trim(),
+    curriculum: document.getElementById("add_cur").value.trim(),
+    school: document.getElementById("add_school").value.trim(),
+    tambon: document.getElementById("add_tambon").value.trim(),
+    amphoe: document.getElementById("add_amphoe").value.trim(),
+    province: document.getElementById("add_province").value.trim(),
+    lat: parseFloat(document.getElementById("add_lat").value),
+    lon: parseFloat(document.getElementById("add_lon").value)
+  };
+
+  if (!payload.s_id || !payload.s_name || isNaN(payload.lat) || isNaN(payload.lon)) {
+    alert("⚠️ กรุณากรอก รหัสนิสิต, ชื่อ–นามสกุล และพิกัด (Lat/Lon)");
+    return;
+  }
+
+  try {
+    const res = await fetch("student_api.php", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      cache: "no-store"
+    });
+    const out = await res.json();
+
+    if (out.ok) {
+      alert(`✅ เพิ่มข้อมูลนิสิตปี ${payload.batch} สำเร็จ!`);
+
+      // ✅ เปลี่ยน dropdown filter ให้ตรงกับปีที่เพิ่ม
+      batch.value = payload.batch;
+
+      // ✅ โหลดข้อมูลเฉพาะปีนั้นใหม่
+      await loadData();
+
+      // ✅ หาแถวที่เพิ่งเพิ่ม แล้วไฮไลต์
+      const tbody = document.getElementById("tableBody");
+      const rows = Array.from(tbody.querySelectorAll("tr"));
+      const newRow = rows.find(r => r.children[1]?.innerText === payload.s_id);
+      if (newRow) {
+        newRow.style.background = "#dcfce7";
+        newRow.scrollIntoView({ behavior: "smooth", block: "center" });
+        setTimeout(() => (newRow.style.background = ""), 1500);
+      }
+
+      map.closePopup();
+    } else {
+      alert("❌ บันทึกไม่สำเร็จ");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("⚠️ เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
+  }
+}
+/* ========================== 📊 สร้างกราฟ (เวอร์ชันสีเดิม AGI) ========================== */
+let pieChart = null;
+let barChart = null;
+let yearChart = null;
+
+function updateCharts(data) {
+  if (!document.getElementById("pieChart") || !document.getElementById("barChart") || !document.getElementById("yearChart")) return;
+  if (!data.features || data.features.length === 0) {
+    if (pieChart) pieChart.destroy();
+    if (barChart) barChart.destroy();
+    if (yearChart) yearChart.destroy();
+    return;
+  }
+
+  // ==== สรุปข้อมูลหลักสูตร ====
+  const curriculumCount = {};
+  data.features.forEach(f => {
+    let cur = (f.properties.curriculum || "ไม่ระบุ")
+  .trim()
+  .replace(/\s+/g, " ")              // ลบช่องว่างเกิน 1 ช่อง
+  .replace(/[ ]/g, " ");             // ลบช่องว่างพิเศษ (non-breaking space)
+curriculumCount[cur] = (curriculumCount[cur] || 0) + 1;
+
+  });
+  const curriculumLabels = Object.keys(curriculumCount);
+  const curriculumValues = Object.values(curriculumCount);
+
+  // ==== สรุปข้อมูลจังหวัด ====
+  const provinceCount = {};
+  data.features.forEach(f => {
+    const prov = f.properties.province || "ไม่ระบุ";
+    provinceCount[prov] = (provinceCount[prov] || 0) + 1;
+  });
+  const topProvinces = Object.entries(provinceCount)
+    .sort((a,b)=>b[1]-a[1])
+    .slice(0,10);
+  const provinceLabels = topProvinces.map(p=>p[0]);
+  const provinceValues = topProvinces.map(p=>p[1]);
+
+  // ==== สรุปข้อมูลชั้นปี (จากรหัสนิสิต) ====
+  const yearCount = {};
+  data.features.forEach(f => {
+    const sid = f.properties.s_id || "";
+    const prefix = sid.substring(0, 2);
+    const year = ["64", "65", "66", "67"].includes(prefix) ? prefix : "อื่น ๆ";
+    yearCount[year] = (yearCount[year] || 0) + 1;
+  });
+  const yearLabels = Object.keys(yearCount);
+  const yearValues = Object.values(yearCount);
+
+  /* 🎨 โทนสี AGI เดิม */
+  const agiColors = [
+    "#3C507D", // Sapphire
+    "#112250", // Royal Blue
+    "#E0C58F", // Gold
+    "#D9CBC2", // Shellstone
+    "#F5F0E9", // Swanwing
+    "#a6a6a6"  // Reserve
+  ];
+
+  /* 🥧 PIE CHART — สัดส่วนนิสิตตามหลักสูตร */
+  const pieCtx = document.getElementById("pieChart").getContext("2d");
+  if (pieChart) pieChart.destroy();
+  pieChart = new Chart(pieCtx, {
+    type: "pie",
+    data: {
+      labels: curriculumLabels,
+      datasets: [{
+        data: curriculumValues,
+        backgroundColor: agiColors,
+        borderColor: "#fff",
+        borderWidth: 2
+      }]
+    },
+    options: {
+      plugins: {
+        legend: { position: "bottom", labels: { color: "#112250" } },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.label}: ${ctx.parsed} คน (${((ctx.parsed / curriculumValues.reduce((a,b)=>a+b,0))*100).toFixed(1)}%)`
+          }
+        }
+      },
+      animation: {
+        animateRotate: true,
+        animateScale: true,
+        duration: 1400,
+        easing: "easeOutQuart"
+      },
+      responsive: true
+    }
+  });
+
+  /* 📊 BAR CHART — จังหวัดที่มีนิสิตมากสุด */
+  const barCtx = document.getElementById("barChart").getContext("2d");
+  if (barChart) barChart.destroy();
+  barChart = new Chart(barCtx, {
+    type: "bar",
+    data: {
+      labels: provinceLabels,
+      datasets: [{
+        label: "จำนวนนิสิต",
+        data: provinceValues,
+        backgroundColor: "#3C507D",
+        borderColor: "#112250",
+        borderWidth: 1.5
+      }]
+    },
+    options: {
+      scales: {
+        x: { ticks: { color:"#112250" } },
+        y: { ticks: { color:"#112250" }, beginAtZero:true }
+      },
+      plugins: { legend: { display: false } },
+      animation: {
+        duration: 1500,
+        easing: "easeOutCubic"
+      },
+      responsive: true
+    }
+  });
+
+  /* 🎓 DOUGHNUT CHART — จำนวนนิสิตตามชั้นปี */
+  const yearCtx = document.getElementById("yearChart").getContext("2d");
+  if (yearChart) yearChart.destroy();
+  yearChart = new Chart(yearCtx, {
+    type: "doughnut",
+    data: {
+      labels: yearLabels,
+      datasets: [{
+        data: yearValues,
+        backgroundColor: agiColors,
+        borderColor: "#fff",
+        borderWidth: 2
+      }]
+    },
+    options: {
+      cutout: "60%",
+      plugins: {
+        legend: { position: "bottom", labels: { color: "#112250" } },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.label}: ${ctx.parsed} คน (${((ctx.parsed / yearValues.reduce((a,b)=>a+b,0))*100).toFixed(1)}%)`
+          }
+        }
+      },
+      animation: {
+        animateRotate: true,
+        duration: 1600,
+        easing: "easeOutQuint"
+      },
+      responsive: true
+    }
+  });
+}
+
+
+// 🗺️ สร้างแผนที่พื้นฐาน (Basemaps)
+var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  attribution: '&copy; OpenStreetMap'
+});
+
+var googleSat = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+  maxZoom: 20,
+  attribution: '&copy; Google Satellite'
+});
+
+var esriTopo = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+  attribution: 'Tiles © Esri'
+});
+
+// ✅ ตั้งค่าเริ่มต้นให้แสดง osm
+osm.addTo(map);
+
+// 📚 รวม basemaps ให้เลือก
+var baseLayers = {
+  "🗺️ แผนที่ถนน (OSM)": osm,
+  "🌎 แผนที่ดาวเทียม (Google Satellite)": googleSat,
+  "🏔️ แผนที่ภูมิประเทศ (Esri Topo)": esriTopo
+};
+
+// ✅ เพิ่มปุ่มสลับแผนที่ (เฉพาะพื้นหลัง)
+L.control.layers(baseLayers, null, { position: 'topright', collapsed: true }).addTo(map);
+
+// ✅ โหลดข้อมูลทันทีเมื่อหน้าเว็บพร้อม เพื่ออัปเดตกาฟด้วย
+document.addEventListener("DOMContentLoaded", () => {
+  loadData();
+});
+
+</script>
+<!-- 🌌 LUXURY BACKGROUND UPGRADE -->
+<canvas id="goldParticles"></canvas>
+<canvas id="goldSparkles"></canvas>
+
+<script>
+// === Layer 1: Gradient Animate ===
+document.body.style.background = `
+  radial-gradient(circle at 10% 20%, #F5F0E9 0%, #E0C58F 35%, #D9CBC2 70%, #3C507D 110%)`;
+document.body.style.backgroundSize = "250% 250%";
+document.body.style.animation = "bgShift 25s ease infinite";
+
+// === Layer 2: Gold Particles ===
+const canvas1 = document.getElementById("goldParticles");
+const ctx1 = canvas1.getContext("2d");
+let particles = [];
+function resizeCanvas1() {
+  canvas1.width = window.innerWidth;
+  canvas1.height = window.innerHeight;
+}
+resizeCanvas1();
+window.addEventListener("resize", resizeCanvas1);
+for (let i = 0; i < 90; i++) {
+  particles.push({
+    x: Math.random() * canvas1.width,
+    y: Math.random() * canvas1.height,
+    r: Math.random() * 2.3 + 0.5,
+    dx: (Math.random() - 0.5) * 0.2,
+    dy: (Math.random() - 0.5) * 0.2,
+    alpha: Math.random() * 0.6 + 0.3
+  });
+}
+function drawParticles1() {
+  ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+  particles.forEach(p => {
+    ctx1.beginPath();
+    const grad = ctx1.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r);
+    grad.addColorStop(0, `rgba(255,215,140,${p.alpha})`);
+    grad.addColorStop(1, "transparent");
+    ctx1.fillStyle = grad;
+    ctx1.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx1.fill();
+    p.x += p.dx;
+    p.y += p.dy;
+    if (p.x < 0 || p.x > canvas1.width) p.dx *= -1;
+    if (p.y < 0 || p.y > canvas1.height) p.dy *= -1;
+  });
+  requestAnimationFrame(drawParticles1);
+}
+drawParticles1();
+
+// === Layer 3: Sparkles ===
+const canvas2 = document.getElementById("goldSparkles");
+const ctx2 = canvas2.getContext("2d");
+function resizeCanvas2() {
+  canvas2.width = window.innerWidth;
+  canvas2.height = window.innerHeight;
+}
+resizeCanvas2();
+window.addEventListener("resize", resizeCanvas2);
+
+const sparkles = Array.from({length: 50}, () => ({
+  x: Math.random() * canvas2.width,
+  y: Math.random() * canvas2.height,
+  size: Math.random() * 1.2 + 0.3,
+  speed: Math.random() * 0.4 + 0.1,
+  opacity: Math.random() * 0.5 + 0.2,
+  flicker: Math.random() * 0.1 + 0.05
+}));
+
+function drawSparkles() {
+  ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+  sparkles.forEach(s => {
+    s.opacity += s.flicker;
+    if (s.opacity >= 1 || s.opacity <= 0.2) s.flicker *= -1;
+    s.y -= s.speed;
+    if (s.y < -10) { s.y = canvas2.height + 10; s.x = Math.random() * canvas2.width; }
+    ctx2.beginPath();
+    ctx2.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+    ctx2.fillStyle = `rgba(255,230,180,${s.opacity})`;
+    ctx2.fill();
+  });
+  requestAnimationFrame(drawSparkles);
+}
+drawSparkles();
+
+// === Styling canvases ===
+[canvas1, canvas2].forEach((c, i) => {
+  c.style.position = "fixed";
+  c.style.top = 0;
+  c.style.left = 0;
+  c.style.width = "100%";
+  c.style.height = "100%";
+  c.style.zIndex = "-1";
+  c.style.pointerEvents = "none";
+});
+
+// 🌐 ปุ่มด้านขวา
+function goToTour() {
+  window.location.href = "chiangmai_map.html"; // หน้าท่องเที่ยว
+}
+function goToAbout() {
+  window.location.href = "about.html"; // หน้าแนะนำตัว
+}
+function logout() {
+  window.location.href = "login.html"; // หน้าแรก
+}
+
+</script>
+<!-- 🌌 END LUXURY BACKGROUND -->
+
+
+
+
+</body>
+</html>

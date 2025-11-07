@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chiang Mai Smart Tourism Map</title>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- ✅ Mouse Position Plugin -->
+<link rel="stylesheet" href="L.Control.MousePosition.css" />
+<script src="L.Control.MousePosition.js"></script>
+
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- ✅ jQuery UI for Autocomplete -->
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+
+
+
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<style>
+:root {
+  --sapphire: #3C507D;
+  --royalblue: #112250;
+  --quicksand: #E0C58F;
+  --swanwing: #F5F0E9;
+  --shellstone: #D9CBC2;
+    --gold: #E0C58F;
+
+}
+
+body {
+  margin: 0;
+  font-family: "Prompt", sans-serif;
+  background: var(--swanwing);
+  color: var(--royalblue);
+  overflow: hidden;
+}
+
+/* HEADER */
+/* 🌟 HEADER เหมือนหน้าของนิสิต */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(90deg, var(--royalblue), var(--sapphire));
+  color: var(--gold);
+  padding: 14px 28px;
+  font-weight: 700;
+  font-size: 18px;
+  border-bottom: 4px solid var(--gold);
+  box-shadow: 0 6px 20px rgba(17,34,80,.35);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+#headerRight { display: flex; gap: 10px; }
+#headerRight button {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(224,197,143,0.5);
+  border-radius: 8px;
+  color: var(--gold);
+  font-weight: 500;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+#headerRight button:hover {
+  background: rgba(255,255,255,0.3);
+  box-shadow: 0 0 10px rgba(224,197,143,0.6);
+  transform: translateY(-1px);
+}
+header span { font-size: 14px; opacity: 0.9; }
+
+/* ⚙️ LEGEND */
+.leaflet-control-layers-expanded {
+  background: rgba(255,255,255,0.95) !important;
+  border-radius: 10px !important;
+  border: 1px solid rgba(224,197,143,0.6);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* LAYOUT */
+#container {
+  display: flex;
+  height: calc(100vh - 55px);
+}
+
+#sidebar {
+  width: 340px;
+  background: var(--swanwing);
+  border-right: 2px solid var(--shellstone);
+  padding: 22px;
+  overflow-y: auto;
+  box-shadow: inset -2px 0 8px rgba(0,0,0,0.05);
+}
+
+#sidebar h3 {
+  text-align: center;
+  color: var(--royalblue);
+  font-weight: 600;
+  font-size: 20px;
+  border-bottom: 2px solid var(--shellstone);
+  padding-bottom: 8px;
+  margin-bottom: 18px;
+}
+
+/* ช่องค้นหาและกรอง */
+#sidebar input,
+#sidebar select {
+  width: 100%;
+  padding: 10px 14px 10px 40px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  border: 1.5px solid var(--shellstone);
+  font-size: 15px;
+  background: #fff;
+  transition: all 0.2s ease;
+}
+#sidebar input {
+  background: #fff url('data:image/svg+xml;utf8,<svg fill="%23C1B8A5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M8.5 3a5.5 5.5 0 0 1 4.27 9.01l4.1 4.1a1 1 0 0 1-1.42 1.42l-4.1-4.1A5.5 5.5 0 1 1 8.5 3zm0 2a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z"/></svg>') no-repeat 12px center;
+  background-size: 18px;
+}
+#sidebar select:nth-of-type(1) {
+  background: #fff url('data:image/svg+xml;utf8,<svg fill="%23C1B8A5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>') no-repeat 12px center;
+  background-size: 18px;
+}
+#sidebar select:nth-of-type(2) {
+  background: #fff url('data:image/svg+xml;utf8,<svg fill="%23C1B8A5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>') no-repeat 12px center;
+  background-size: 18px;
+}
+
+#sidebar input:focus,
+#sidebar select:focus {
+  border-color: var(--quicksand);
+  box-shadow: 0 0 6px rgba(224,197,143,0.6);
+  outline: none;
+}
+
+/* ปุ่มรีเซ็ต */
+#sidebar button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: var(--royalblue);
+  color: var(--swanwing);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  transition: all 0.3s;
+}
+#sidebar button:hover {
+  background: var(--quicksand);
+  color: var(--royalblue);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+}
+
+/* รายชื่อสถานที่ */
+.place-card {
+  background: #fff;
+  border-left: 5px solid var(--quicksand);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.07);
+  transition: 0.2s;
+}
+.place-card:hover {
+  transform: scale(1.02);
+  background: var(--swanwing);
+  cursor: pointer;
+}
+.place-card h4 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--sapphire);
+}
+.place-card small { color: #555; }
+
+#map {
+  flex: 1;
+  margin: 18px;
+  border-radius: 16px;
+  border: 3px solid var(--shellstone); /* สีขอบนุ่มโทนครีมเทา */
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5); /* เงาเบาๆ */
+  overflow: hidden; /* ป้องกัน tile เกินขอบ */
+}
+
+@media(max-width:768px) {
+  #container { flex-direction: column; }
+  #sidebar { width: 100%; height: 45vh; }
+}
+
+/* ✅ ปรับขอบไม่ให้ input/select เกินกรอบ sidebar */
+#sidebar input,
+#sidebar select,
+#sidebar button {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+}
+
+#resetBtn {
+  margin-top: 4px;
+  margin-bottom: 18px;
+}
+
+
+/* ✅ ลด padding ใน input/select เพื่อไม่เบียด */
+#sidebar input,
+#sidebar select {
+  padding-left: 38px;
+  margin-right: 0;
+}
+
+/* ✅ แก้ไขให้ scrollbar ภายใน sidebar ดูเรียบหรู */
+#sidebar::-webkit-scrollbar {
+  width: 8px;
+}
+#sidebar::-webkit-scrollbar-thumb {
+  background-color: var(--shellstone);
+  border-radius: 4px;
+}
+#sidebar::-webkit-scrollbar-thumb:hover {
+  background-color: var(--quicksand);
+}
+
+/* ===== ปุ่มเพิ่มจุด / รีเซ็ต ===== */
+#buttonRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 6px;
+  margin-bottom: 18px;
+}
+
+#buttonRow button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  transition: all 0.3s;
+}
+
+/* ซ้าย = เพิ่มจุดใหม่ */
+#addPointBtn {
+  background: var(--quicksand);
+  color: var(--royalblue);
+}
+#addPointBtn:hover {
+  background: #e8d49b;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+}
+
+/* ขวา = รีเซ็ต */
+#resetBtn {
+  background: var(--royalblue);
+  color: var(--swanwing);
+}
+#resetBtn:hover {
+  background: var(--quicksand);
+  color: var(--royalblue);
+}
+
+/* 🌟 แอนิเมชันตอนเปิดแผนที่ */
+#map {
+  animation: fadeUp 0.7s ease-in-out;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.autocomplete-menu {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 99999 !important;
+  font-family: "Prompt", sans-serif;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  background-color: rgba(0,0,0,0.5);
+}
+.modal-content {
+  background: #fff;
+  width: 420px;
+  margin: 4% auto;
+  padding: 20px;
+  border-radius: 12px;
+  font-family: "Prompt", sans-serif;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  max-height: 85vh;
+  overflow-y: auto;
+}
+.modal-content label { display:block; margin-top:8px; font-weight:600; }
+.modal-content input, select, textarea {
+  width:100%; padding:6px; border:1px solid #ccc; border-radius:6px;
+}
+.btn-row {
+  display:flex; justify-content:space-between; margin-top:15px;
+}
+.btn-row button {
+  flex:1; margin:0 4px; padding:10px; border:none;
+  border-radius:6px; cursor:pointer;
+  font-weight:600;
+}
+#saveNew { background:#112250; color:white; }
+#cancelNew { background:#aaa; color:white; }
+
+
+
+</style>
+</head>
+
+<body>
+<header>
+  <div>🏞️ Chiang Mai Tourism Map</div>
+    <div id="headerRight">
+    <button onclick="goToStudent()">🎓 หน้านิสิต</button>
+    <button onclick="goToAbout()">📘 แนะนำตัว</button>
+    <button onclick="goToLocalBiz()">🏪 ธุรกิจท้องถิ่น</button>
+    <button onclick="logout()">🚪 ออกจากระบบ</button>
+  </div>
+</header>
+
+<div id="container">
+  <div id="sidebar">
+    <h3><i class="bi bi-search"></i> ค้นหาสถานที่</h3>
+    <input type="text" id="searchBox" placeholder="🔍 พิมพ์ชื่อสถานที่...">
+    <select id="filterType"><option value="">🏕️ ทุกประเภท</option></select>
+    <select id="filterAmphoe"><option value="">📍 ทุกอำเภอ</option></select>
+<button id="addPointBtn"><i class="bi bi-plus-circle"></i> เพิ่มจุดใหม่</button>
+  <button id="resetBtn"><i class="bi bi-arrow-repeat"></i> รีเซ็ต</button>    <div id="resultList"></div>
+  </div>
+
+  <div id="map"></div>
+</div>
+
+<!-- ✅ POPUP FORM เพิ่มข้อมูล -->
+<div id="addModal" class="modal">
+  <div class="modal-content">
+    <h3>➕ เพิ่มสถานที่ท่องเที่ยวใหม่</h3>
+
+    <label>จังหวัด</label>
+    <input type="text" id="province" value="เชียงใหม่" disabled>
+
+    <label>อำเภอ</label>
+    <select id="amphoeSelect"><option value="">เลือกอำเภอ</option></select>
+
+<label>ตำบล</label>
+<input type="text" id="tambonSelect" placeholder="พิมพ์ชื่อตำบล...">
+
+
+    <label>ประเภทสถานที่</label>
+    <select id="typeSelect"><option value="">เลือกประเภท</option></select>
+
+    <label>ชื่อสถานที่</label>
+    <input type="text" id="name">
+
+    <label>คำอธิบาย</label>
+    <textarea id="description"></textarea>
+
+    <label>ละติจูด (Latitude)</label>
+    <input type="text" id="latitude">
+
+    <label>ลองจิจูด (Longitude)</label>
+    <input type="text" id="longitude">
+
+    <label>เวลาเปิด</label>
+    <input type="text" id="open_time" placeholder="เช่น 08:00 น.">
+
+    <label>เวลาปิด</label>
+    <input type="text" id="close_time" placeholder="เช่น 17:00 น.">
+
+    <label>เบอร์โทร</label>
+    <input type="text" id="contact">
+
+    <label>ลิงก์แผนที่ (Google Maps)</label>
+    <input type="text" id="map_link">
+
+    <label>ชื่อไฟล์รูป (เช่น 41.jpg)</label>
+    <input type="text" id="image_url">
+
+    <div class="btn-row">
+      <button id="saveNew">💾 บันทึก</button>
+      <button id="cancelNew">❌ ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ====== MAP INITIALIZATION ======
+var map = L.map("map").setView([18.7883, 98.9853], 8);
+
+// --- Base maps ---
+var osm = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18 });
+var esri = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 18 });
+
+// 🗺️ ตั้งค่าแผนที่เริ่มต้น (เปิดแค่ถนน)
+osm.addTo(map);
+
+const baseMaps = {
+  "🗺️ แผนที่ถนน": osm,
+  "🛰️ ภาพถ่ายดาวเทียม": esri
+};
+
+// ✅ Layer Control จะรวมทุก overlay ที่เราสร้างด้านล่าง
+const overlayMaps = {};
+// ✅ Layer Control แบบมีปุ่ม Toggle เหมือนหน้าของนิสิต
+const layerControl = L.control.layers(baseMaps, overlayMaps, {
+  collapsed: true,  // ✅ ซ่อนเป็นปุ่ม
+  position: "topright" // อยู่มุมขวาบน
+}).addTo(map);
+
+// ✅ แสดงพิกัดเมาส์
+L.control.mousePosition().addTo(map);
+
+// === WMS Chiang Mai Layers ===
+const WMS = "http://localhost:8080/geoserver/chiangmai_gis/wms"; // เปลี่ยน URL ถ้าไม่ใช้ localhost
+
+const wmsAmphoe = L.tileLayer.wms(WMS, {
+  layers: "chiangmai_gis:amphoe_chiangmai",
+  format: "image/png",
+  transparent: true,
+  opacity: 0.8
+});
+
+const wmsTambon = L.tileLayer.wms(WMS, {
+  layers: "chiangmai_gis:tambon_chiangmai",
+  format: "image/png",
+  transparent: true,
+  opacity: 0.6
+});
+
+const wmsRoads = L.tileLayer.wms(WMS, {
+  layers: "chiangmai_gis:roads_chiangmai",
+  format: "image/png",
+  transparent: true,
+  opacity: 0.8
+});
+
+// ===== CLICK GETFEATUREINFO (สำหรับ WMS Layers) =====
+// ===== CLICK GETFEATUREINFO (สำหรับ WMS Layers) =====
+let highlightLayer = L.geoJSON(null, {
+  style: { color: "#FFD966", weight: 3, fillOpacity: 0 }
+}).addTo(map);
+
+map.on("click", function (e) {
+  const latlng = e.latlng;
+  const point = map.latLngToContainerPoint(latlng, map.getZoom());
+  const size = map.getSize();
+  const baseUrl = "http://localhost:8080/geoserver/chiangmai_gis/wms";
+
+  const params = {
+    request: "GetFeatureInfo",
+    service: "WMS",
+    srs: "EPSG:4326", // ถ้ายังไม่ขึ้น ลองเปลี่ยนเป็น EPSG:3857
+    styles: "",
+    transparent: true,
+    version: "1.1.1",
+    format: "image/png",
+    bbox: map.getBounds().toBBoxString(),
+    height: size.y,
+    width: size.x,
+    info_format: "application/json",
+    x: Math.round(point.x),
+    y: Math.round(point.y),
+  };
+
+  if (map.hasLayer(wmsTambon)) {
+    params.layers = "chiangmai_gis:tambon_chiangmai";
+    params.query_layers = "chiangmai_gis:tambon_chiangmai";
+  } else if (map.hasLayer(wmsAmphoe)) {
+    params.layers = "chiangmai_gis:amphoe_chiangmai";
+    params.query_layers = "chiangmai_gis:amphoe_chiangmai";
+  } else return; // ยังไม่ได้เปิดชั้นใดเลย
+
+  const url = baseUrl + L.Util.getParamString(params, baseUrl, true);
+
+  fetch(url)
+    .then(r => r.json())
+    .then(data => {
+      console.log("🎯 Feature Info:", data);
+
+      if (data.features && data.features.length > 0) {
+        const f = data.features[0];
+        const p = f.properties || {};
+
+        // 🏷️ ดึงชื่อฟิลด์ให้ตรงกับแต่ละเลเยอร์
+        const tambon = p.TAM_NAM_T || "";     // ✅ ชื่อตำบล (แทน TAMBON_T)
+        const tambonCode = p.TAMBON_IDN || "";
+        const amphoe = p.AMPHOE_T || "";
+        const amphoeCode = p.AMPHOE_IDN || "";
+        const prov = p.PROV_NAM_T || "จังหวัดเชียงใหม่";
+
+        // 🎨 สี popup ตามประเภท
+        let bgColor = map.hasLayer(wmsTambon) ? "#E5FFF4" : "#FFF9E5";
+
+        highlightLayer.clearLayers();
+        highlightLayer.addData(f);
+
+        const popupHTML = `
+          <div style="font-family:'Prompt',sans-serif;background:${bgColor};
+                      padding:10px;border-radius:10px;line-height:1.5;
+                      box-shadow:0 2px 6px rgba(0,0,0,0.2);">
+            <b>📍 ${
+              tambon ? "ตำบล " + tambon :
+              amphoe ? "อำเภอ " + amphoe : "ไม่ทราบชื่อ"
+            }</b><br>
+            ${tambonCode || amphoeCode ? `<small>รหัส: ${tambonCode || amphoeCode}</small><br>` : ""}
+            <small>${prov}</small>
+          </div>
+        `;
+
+        L.popup({ autoPan: true, autoPanPaddingTopLeft: [350, 50] })
+          .setLatLng(latlng)
+          .setContent(popupHTML)
+          .openOn(map);
+      } else {
+        console.warn("⚠️ ไม่มีข้อมูลในจุดนี้");
+      }
+    })
+    .catch(err => console.error("❌ GetFeatureInfo error:", err));
+});
+
+
+
+
+
+// 🟠 สร้างกลุ่มชั้นสถานที่ท่องเที่ยวไว้ก่อน (ยังไม่ addTo map)
+let allData = null;
+const tourismLayer = L.geoJSON(null, {
+  pointToLayer: (f, latlng) => {
+    return L.marker(latlng, {
+     icon: L.divIcon({
+  html: `
+    <div style="
+      background: linear-gradient(145deg,#B85C38,#E0C58F);
+      width:30px; height:30px;
+      border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      color:white; font-size:16px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.35);
+      transform: translateY(4px);
+    ">
+      <i class='bi bi-geo-alt-fill'></i>
+    </div>
+  `,
+  className: "",
+  iconSize: [30, 30],
+  iconAnchor: [15, 15],      // ✅ ยึดตรงกลางจุด
+  popupAnchor: [0, -8]       // ✅ ลดการลอยของ popup
+})
+
+    }).bindPopup(`
+  <div style="
+    font-family:'Prompt',sans-serif;
+    text-align:center;
+    background:white;
+    border-radius:12px;
+    padding:8px;
+    box-shadow:0 3px 10px rgba(0,0,0,0.15);
+    max-width:260px;
+  ">
+    ${f.properties.image_url ? `<img src="${f.properties.image_url}" style="width:100%;border-radius:8px;margin-bottom:6px;">` : ""}
+    <h4 style="margin:4px 0;">${f.properties.name}</h4>
+    <small>${f.properties.type || "-"} · ${f.properties.amphoe || "-"}</small><br>
+    <small>${f.properties.description || ""}</small><hr style="margin:8px 0;">
+    ${f.properties.open_time ? `<p><i class="bi bi-clock"></i> <b>เวลาเปิด:</b> ${f.properties.open_time}</p>` : ""}
+    ${f.properties.close_time ? `<p><i class="bi bi-clock-history"></i> <b>เวลาปิด:</b> ${f.properties.close_time}</p>` : ""}
+    ${f.properties.contact ? `<p><i class="bi bi-telephone"></i> <b>ติดต่อ:</b> ${f.properties.contact}</p>` : ""}
+    ${f.properties.map_link ? `<p><a href="${f.properties.map_link}" target="_blank" style="color:#3C507D;text-decoration:none;">
+      🌐 เปิดในแผนที่</a></p>` : ""}
+    <div style="margin-top:8px;">
+      <button class="editBtn" data-id="${f.properties.id}" 
+        style="background:#3C507D;color:white;border:none;border-radius:6px;padding:5px 10px;margin-right:6px;cursor:pointer;">
+        ✏️ แก้ไข</button>
+      <button class="deleteBtn" data-id="${f.properties.id}" 
+        style="background:#B33A3A;color:white;border:none;border-radius:6px;padding:5px 10px;cursor:pointer;">
+        🗑️ ลบ</button>
+  </div>
+`, { offset: L.point(0, -25),
+  autoPan: true,
+  autoPanPaddingTopLeft: [0, 120] });
+
+  }
+});
+
+// 🔵 เพิ่มชั้น “สถานที่ท่องเที่ยว” ลงใน Layer Control
+layerControl.addOverlay(tourismLayer, "🏕️ สถานที่ท่องเที่ยว");
+// 🟡 เพิ่มเลเยอร์เหล่านี้ใน control (ยังไม่เปิดตอนเริ่ม)
+layerControl.addOverlay(wmsAmphoe, "📌 ขอบเขตอำเภอ (WMS)");
+layerControl.addOverlay(wmsTambon, "📍 ขอบเขตตำบล (WMS)");
+layerControl.addOverlay(wmsRoads, "🛣️ เส้นทางถนน (WMS)");
+
+// ✅ เมื่อผู้ใช้เปิด/ปิดชั้น "สถานที่ท่องเที่ยว"
+map.on("overlayadd", function(e) {
+  if (e.name === "🏕️ สถานที่ท่องเที่ยว") {
+    // โหลดข้อมูลถ้ายังไม่มีในแผนที่
+    if (!map.hasLayer(tourismLayer) && allData) {
+      tourismLayer.addData(allData);
+    }
+  }
+});
+
+map.on("overlayremove", function(e) {
+  if (e.name === "🏕️ สถานที่ท่องเที่ยว") {
+    map.removeLayer(tourismLayer);
+  }
+});
+
+
+// 🧭 หมายเหตุ: ยังไม่ addTo(map) ตอนเริ่มต้น ต้องให้ผู้ใช้กดเปิดเอง
+
+
+
+// ---------- ขอบเขตจังหวัดเชียงใหม่ (GeoJSON) ----------
+function styleProvince(feature){
+  return {
+    fillColor: "#F2E9D8",   // พื้นโทนอ่อน (ครีม)
+    color: "#24305E",       // เส้นเข้ม contrast
+    weight: 2.5,
+    fillOpacity: 0.35       // โปร่งขึ้นเล็กน้อย
+  };
+}
+
+// รองรับชื่อเขตจากหลายคีย์
+function getProvName(props) {
+  return props.PROV_NAM_T || props.PROV_NAM_E || props.name || "Chiang Mai";
+}
+
+const provinceLayer = L.geoJSON(null, {
+  style: styleProvince,
+  onEachFeature: (feature, layer) => {
+    const p = feature.properties;
+    const areaKm = (p.area / 1_000_000).toFixed(2); // แปลง m² → km²
+    const perimeterKm = (p.perimeter / 1000).toFixed(2); // แปลง m → km
+
+    const popupHTML = `
+      <div style="
+        font-family:'Prompt',sans-serif;
+        text-align:center;
+        line-height:1;
+        padding:8px;
+        width:180px;
+      ">
+        <h4>📍 ${p.prov_nam_t}</h4>
+        <p><b>${p.prov_nam_e}</b></p>
+        <hr style="margin:4px 0;">
+        <p>🗺️ <b>พื้นที่:</b> ${areaKm} ตร.กม.</p>
+        <p>📏 <b>เส้นรอบรูป:</b> ${perimeterKm} กม.</p>
+        <p>🏷️ <b>รหัสจังหวัด:</b> ${p.prov_code}</p>
+        <p>🌾 <b>ภูมิภาค:</b> ${p.region}</p>
+      </div>
+    `;
+
+    layer.bindPopup(popupHTML);
+    layer.on({
+      mouseover: e => e.target.setStyle({ weight: 3, fillOpacity: 0.65 }),
+      mouseout: e => provinceLayer.resetStyle(e.target),
+      click: e => map.fitBounds(e.target.getBounds())
+    });
+  }
+});
+
+
+
+// โหลดไฟล์ GeoJSON ของคุณ
+fetch("chiangmai.geojson")
+  .then(r => r.json())
+  .then(geo => {
+    console.log("✅ GeoJSON loaded:", geo);
+    provinceLayer.addData(geo);
+    layerControl.addOverlay(provinceLayer, "📍 ขอบเขตเชียงใหม่ (GeoJSON)");
+    // ❌ ไม่ต้อง addTo(map)
+    // ❌ ไม่ต้อง fitBounds ตอนเริ่ม
+  })
+  .catch(err => console.error("❌ โหลด chiangmai.geojson ไม่ได้:", err));
+
+
+
+
+// ====== LOAD DATA FROM PHP ======
+$.ajax({
+  url:"tourism_json.php",
+  dataType:"json",
+  success:(data)=>{
+    allData=data;
+    tourismLayer.addData(allData);
+    fillDropdowns(allData);
+    renderList(allData.features);
+  }
+});
+
+// ====== FILTER SYSTEM ======
+function fillDropdowns(data){
+  const types=[...new Set(data.features.map(f=>f.properties.type))].filter(Boolean).sort();
+  const amphoes=[...new Set(data.features.map(f=>f.properties.amphoe))].filter(Boolean).sort();
+  types.forEach(t=>$("#filterType").append(`<option>${t}</option>`));
+  amphoes.forEach(a=>$("#filterAmphoe").append(`<option>${a}</option>`));
+}
+
+function filterData(){
+  const text=$("#searchBox").val().toLowerCase();
+  const type=$("#filterType").val();
+  const amphoe=$("#filterAmphoe").val();
+  const filtered=allData.features.filter(f=>{
+    return (!type||f.properties.type===type)&&
+           (!amphoe||f.properties.amphoe===amphoe)&&
+           f.properties.name.toLowerCase().includes(text);
+  });
+  tourismLayer.clearLayers().addData({type:"FeatureCollection",features:filtered});
+  renderList(filtered);
+  if(filtered.length>0) map.fitBounds(tourismLayer.getBounds());
+}
+
+$("#searchBox, #filterType, #filterAmphoe").on("input change",filterData);
+$("#resetBtn").on("click",()=>{
+  // ✅ ล้างช่องค้นหาและตัวกรอง
+  $("#searchBox").val("");
+  $("#filterType").val("");
+  $("#filterAmphoe").val("");
+
+  // ✅ ลบ marker เดี่ยว (activeMarker) ถ้ามี
+  if (activeMarker) {
+    map.removeLayer(activeMarker);
+    activeMarker = null;
+  }
+
+  // ✅ เคลียร์จุดสถานที่ท่องเที่ยวทั้งหมด
+  tourismLayer.clearLayers().addData(allData);
+
+  // ✅ รีเซ็ต list ทางซ้าย
+  renderList(allData.features);
+
+  // ✅ รีเซ็ตมุมมองให้พอดีกับจังหวัด
+  if (provinceLayer.getLayers().length > 0) {
+    map.fitBounds(provinceLayer.getBounds());
+  } else if (tourismLayer.getLayers().length > 0) {
+    map.fitBounds(tourismLayer.getBounds());
+  }
+});
+
+
+function renderList(features){
+  const box=$("#resultList");box.empty();
+  if(!features.length){box.html("<p style='text-align:center;color:#999;'>ไม่พบข้อมูล</p>");return;}
+  features.forEach(f=>{
+   box.append(`
+  <div class="place-card" onclick="flyTo(${f.geometry.coordinates[1]},${f.geometry.coordinates[0]})">
+    ${f.properties.image_url ? `<img src="${f.properties.image_url}" style="width:100%;border-radius:8px 8px 0 0;object-fit:cover;height:140px;">` : ""}
+    <div style="padding:8px;">
+      <h4>${f.properties.name}</h4>
+      <small>${f.properties.type||"-"} · ${f.properties.amphoe||""}</small>
+    </div>
+  </div>
+`);
+
+
+  });
+}
+let activeMarker = null; // ตัวแปรเก็บจุดที่แสดงอยู่ล่าสุด
+
+function flyTo(lat, lng) {
+  // 🧹 ลบจุดเดิมออกก่อน (ถ้ามี)
+  if (activeMarker) {
+    map.removeLayer(activeMarker);
+  }
+
+  // 🗺️ บินไปยังพิกัดที่คลิก
+  map.flyTo([lat, lng], 13, { duration: 1.2 });
+
+  // 🔍 หา feature ที่ตรงกับพิกัด
+  const feature = allData.features.find(f => {
+    const [fLng, fLat] = f.geometry.coordinates;
+    return Math.abs(fLat - lat) < 0.0001 && Math.abs(fLng - lng) < 0.0001;
+  });
+
+  // 📍 สร้าง marker ใหม่เฉพาะจุดนั้น
+if (feature) {
+  activeMarker = L.marker([lat, lng], {
+  icon: L.divIcon({
+  html: `
+    <div style="
+      background: linear-gradient(145deg,#B85C38,#E0C58F);
+      width:30px; height:30px;
+      border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      color:white; font-size:16px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.35);
+      transform: translateY(4px);
+    ">
+      <i class='bi bi-geo-alt-fill'></i>
+    </div>
+  `,
+  className: "",
+  iconSize: [30, 30],
+  iconAnchor: [15, 15],      // ✅ ยึดตรงกลางจุด
+  popupAnchor: [0, -8]       // ✅ ลดการลอยของ popup
+})
+
+  })
+  .addTo(map)
+ .bindPopup(`
+  <div style="
+    font-family:'Prompt',sans-serif;
+    text-align:center;
+    background:white;
+    border-radius:12px;
+    padding:10px;
+    box-shadow:0 3px 10px rgba(0,0,0,0.15);
+    max-width:280px;
+  ">
+    ${feature.properties.image_url ? `<img src="${feature.properties.image_url}" style="width:100%;border-radius:8px;margin-bottom:6px;">` : ""}
+    <h4 style="margin:4px 0;">${feature.properties.name}</h4>
+    <small>${feature.properties.type || "-"} · ${feature.properties.amphoe || "-"}</small><br>
+    <small>${feature.properties.description || ""}</small><hr style="margin:8px 0;">
+    ${feature.properties.open_time ? `<p><i class="bi bi-clock"></i> <b>เวลาเปิด:</b> ${feature.properties.open_time}</p>` : ""}
+    ${feature.properties.close_time ? `<p><i class="bi bi-clock-history"></i> <b>เวลาปิด:</b> ${feature.properties.close_time}</p>` : ""}
+    ${feature.properties.contact ? `<p><i class="bi bi-telephone"></i> <b>ติดต่อ:</b> ${feature.properties.contact}</p>` : ""}
+    ${feature.properties.map_link ? `<p><a href="${feature.properties.map_link}" target="_blank" style="color:#3C507D;text-decoration:none;">
+      🌐 เปิดในแผนที่</a></p>` : ""}
+    <div style="margin-top:8px;">
+      <button class="editBtn" data-id="${feature.properties.id}" 
+        style="background:#3C507D;color:white;border:none;border-radius:6px;padding:5px 10px;margin-right:6px;cursor:pointer;">
+        ✏️ แก้ไข</button>
+      <button class="deleteBtn" data-id="${feature.properties.id}" 
+        style="background:#B33A3A;color:white;border:none;border-radius:6px;padding:5px 10px;cursor:pointer;">
+        🗑️ ลบ</button>
+    </div>
+  </div>
+`, { offset: L.point(0, -5) })
+.openPopup();
+
+}
+
+}
+
+// =======================
+// ✅ INSERT จุดใหม่ (Double Click)
+// =======================
+map.on("dblclick", function(e) {
+  const lat = e.latlng.lat.toFixed(6);
+  const lng = e.latlng.lng.toFixed(6);
+
+  const formHTML = `
+    <div style="font-family:'Prompt',sans-serif;">
+      <h4>เพิ่มสถานที่ใหม่</h4>
+      <input id="name" placeholder="ชื่อสถานที่" style="width:100%;margin-bottom:6px;">
+      <input id="type" placeholder="ประเภท (เช่น วัด / ดอย / น้ำตก)" style="width:100%;margin-bottom:6px;">
+      <input id="amphoe" placeholder="อำเภอ" style="width:100%;margin-bottom:6px;">
+      <textarea id="desc" placeholder="คำอธิบาย" style="width:100%;margin-bottom:6px;"></textarea>
+      <input id="img" placeholder="ชื่อไฟล์รูป (เช่น 41.jpg)" style="width:100%;margin-bottom:6px;">
+      <button id="saveBtn" style="background:#112250;color:white;padding:8px 12px;border:none;border-radius:6px;cursor:pointer;">
+        💾 บันทึก
+      </button>
+    </div>
+  `;
+
+  const popup = L.popup()
+    .setLatLng(e.latlng)
+    .setContent(formHTML)
+    .openOn(map);
+
+  // ฟังก์ชันบันทึก
+  $(document).on("click", "#saveBtn", function() {
+    const data = {
+      name: $("#name").val(),
+      type: $("#type").val(),
+      amphoe: $("#amphoe").val(),
+      description: $("#desc").val(),
+      image_url: $("#img").val(),
+      lat: lat,
+      lng: lng
+    };
+
+    $.ajax({
+      url: "insert.php",
+      type: "POST",
+      data: data,
+      success: function(res) {
+        alert("✅ เพิ่มข้อมูลสำเร็จ!");
+        map.closePopup();
+        tourismLayer.clearLayers().addData(allData); // โหลดใหม่
+        location.reload(); // รีเฟรชเพื่อดึงข้อมูลล่าสุด
+      },
+      error: function() {
+        alert("❌ เกิดข้อผิดพลาดในการบันทึก");
+      }
+    });
+  });
+});
+
+// =======================
+// ✏️ แก้ไขข้อมูล (Edit)
+// =======================
+// ✏️ แก้ไขข้อมูล (Edit) — แบบฟอร์มเต็ม
+// =======================
+$(document).on("click", ".editBtn", function() {
+  const id = $(this).data("id");
+  const feature = allData.features.find(f => f.properties.id == id);
+  if (!feature) return;
+
+  const p = feature.properties;
+  const lat = feature.geometry.coordinates[1];
+  const lng = feature.geometry.coordinates[0];
+
+  const formHTML = `
+  <div style="font-family:'Prompt',sans-serif; width:260px;">
+    <h4>✏️ แก้ไขข้อมูล</h4>
+    <label>ชื่อสถานที่</label>
+    <input id="edit_name" value="${p.name || ""}" style="width:100%;margin-bottom:6px;">
+
+    <label>ประเภทสถานที่</label>
+    <input id="edit_type" value="${p.type || ""}" style="width:100%;margin-bottom:6px;">
+
+    <label>คำอธิบาย</label>
+    <textarea id="edit_desc" style="width:100%;margin-bottom:6px;">${p.description || ""}</textarea>
+
+    <label>อำเภอ</label>
+    <input id="edit_amphoe" value="${p.amphoe || ""}" style="width:100%;margin-bottom:6px;">
+
+    <label>ตำบล</label>
+    <input id="edit_tambon" value="${p.tambon || ""}" style="width:100%;margin-bottom:6px;">
+
+    <label>เวลาเปิด</label>
+    <input id="edit_open" value="${p.open_time || ""}" style="width:100%;margin-bottom:6px;">
+
+    <label>เวลาปิด</label>
+    <input id="edit_close" value="${p.close_time || ""}" style="width:100%;margin-bottom:6px;">
+
+    <label>เบอร์โทร</label>
+    <input id="edit_contact" value="${p.contact || ""}" style="width:100%;margin-bottom:6px;">
+
+    <label>ลิงก์แผนที่ (Google Maps)</label>
+    <input id="edit_map" value="${p.map_link || ""}" style="width:100%;margin-bottom:6px;">
+
+    <label>ชื่อไฟล์รูป</label>
+    <input id="edit_img" value="${p.image_url ? p.image_url.split('/').pop() : ""}" style="width:100%;margin-bottom:6px;">
+
+    <button id="saveEdit" data-id="${id}"
+      style="background:#112250;color:white;padding:8px 12px;border:none;border-radius:6px;cursor:pointer;width:100%;">
+      💾 บันทึกการแก้ไข
+    </button>
+  </div>
+  `;
+
+  L.popup()
+    .setLatLng([lat, lng])
+    .setContent(formHTML)
+    .openOn(map);
+});
+
+
+$(document).on("click", "#saveEdit", function() {
+  const id = $(this).data("id");
+  $.ajax({
+    url: "update.php",
+    type: "POST",
+    data: {
+      id: id,
+      name: $("#edit_name").val(),
+      type: $("#edit_type").val(),
+      description: $("#edit_desc").val(),
+      image_url: $("#edit_img").val()
+    },
+    success: () => { alert("✅ แก้ไขข้อมูลเรียบร้อย"); location.reload(); },
+    error: () => alert("❌ ไม่สามารถแก้ไขข้อมูลได้")
+  });
+});
+
+
+// =======================
+// 🗑️ ลบข้อมูล (Delete)
+// =======================
+// =======================
+// 🗑️ ลบข้อมูล (Delete) — ลบ marker, popup, และ card ใน list
+// =======================
+$(document).on("click", ".deleteBtn", function() {
+  const id = $(this).data("id");
+
+  if (confirm("⚠️ ต้องการลบข้อมูลนี้จริงหรือไม่?")) {
+    $.post("delete.php", { id: id }, function(res) {
+      alert("🗑️ ลบข้อมูลสำเร็จ");
+
+      // ✅ ปิด popup ที่เปิดอยู่
+      map.closePopup();
+
+      // ✅ ลบ marker ที่ตรง id
+      tourismLayer.eachLayer(function(layer) {
+        if (layer.feature && layer.feature.properties.id == id) {
+          map.removeLayer(layer);
+        }
+      });
+
+      // ✅ ลบข้อมูลใน allData
+      allData.features = allData.features.filter(f => f.properties.id != id);
+
+      // ✅ ลบการ์ดใน list ฝั่งซ้ายที่ตรง id
+      $(`.place-card:has(button[data-id='${id}'])`).remove();
+
+      // ✅ อัปเดตรายการใหม่ใน list ให้สอดคล้อง
+      renderList(allData.features);
+
+    }).fail(() => alert("❌ ลบไม่สำเร็จ"));
+  }
+});
+
+
+
+
+// เมื่อคลิกแผนที่ (ถ้าอยู่ในโหมดเพิ่ม)
+map.on("click", function(e) {
+  if (!addMode) return; // ถ้าไม่ได้อยู่ในโหมดเพิ่ม -> ข้าม
+
+  const lat = e.latlng.lat.toFixed(6);
+  const lng = e.latlng.lng.toFixed(6);
+
+  const formHTML = `
+    <div style="font-family:'Prompt',sans-serif;">
+      <h4>เพิ่มสถานที่ใหม่</h4>
+      <input id="name" placeholder="ชื่อสถานที่" style="width:100%;margin-bottom:6px;">
+      <input id="type" placeholder="ประเภท (เช่น วัด / ดอย / น้ำตก)" style="width:100%;margin-bottom:6px;">
+      <input id="amphoe" placeholder="อำเภอ" style="width:100%;margin-bottom:6px;">
+      <textarea id="desc" placeholder="คำอธิบาย" style="width:100%;margin-bottom:6px;"></textarea>
+      <input id="img" placeholder="ชื่อไฟล์รูป (เช่น 41.jpg)" style="width:100%;margin-bottom:6px;">
+      <button id="saveBtn" style="background:#112250;color:white;padding:8px 12px;border:none;border-radius:6px;cursor:pointer;">
+        💾 บันทึก
+      </button>
+    </div>
+  `;
+
+  const popup = L.popup()
+    .setLatLng(e.latlng)
+    .setContent(formHTML)
+    .openOn(map);
+
+  // เมื่อกดปุ่มบันทึก
+  $(document).on("click", "#saveBtn", function() {
+    const data = {
+      name: $("#name").val(),
+      type: $("#type").val(),
+      amphoe: $("#amphoe").val(),
+      description: $("#desc").val(),
+      image_url: $("#img").val(),
+      lat: lat,
+      lng: lng
+    };
+
+    $.ajax({
+      url: "insert.php",
+      type: "POST",
+      data: data,
+      success: function(res) {
+        alert("✅ เพิ่มข้อมูลสำเร็จ!");
+        map.closePopup();
+        addMode = false;
+        $("#addPointBtn").html("<i class='bi bi-plus-circle'></i> เพิ่มจุดใหม่").css({
+          background: "var(--quicksand)",
+          color: "var(--royalblue)"
+        });
+        location.reload(); // โหลดข้อมูลใหม่
+      },
+      error: function() {
+        alert("❌ เกิดข้อผิดพลาดในการบันทึก");
+      }
+    });
+  });
+});
+// ✅ เปิด/ปิด popup
+$("#addPointBtn").on("click", ()=> $("#addModal").show());
+$(window).on("click", function(e) {
+  if ($(e.target).is("#addModal")) {
+    $("#addModal").fadeOut(200);
+  }
+});
+
+// ✅ โหลด dropdown จากฐานข้อมูล
+function loadDropdowns() {
+  $.getJSON("get_types.php", data=>{
+    data.forEach(t => $("#typeSelect").append(`<option>${t.type}</option>`));
+  });
+  $.getJSON("get_amphoe.php", data=>{
+    data.forEach(a => $("#amphoeSelect").append(`<option>${a.amphoe}</option>`));
+  });
+}
+loadDropdowns();
+
+// ✅ โหลดตำบลตามอำเภอ
+$("#amphoeSelect").on("change", function(){
+  const amphoe = $(this).val();
+  const tambonDropdown = $("#tambonSelect");
+  tambonDropdown.empty().append(`<option value="">เลือกตำบล</option>`);
+
+  if(!amphoe) return;
+
+});
+
+
+// ✅ บันทึกข้อมูลใหม่
+// ✅ บันทึกข้อมูลใหม่ (ทำงานแน่นอน)
+$(document).on("click", "#saveNew", function () {
+  const data = {
+    name: $("#name").val().trim(),
+    type: $("#typeSelect").val().trim(),
+    description: $("#description").val().trim(),
+    amphoe: $("#amphoeSelect").val().trim(),
+    tambon: $("#tambonSelect").val().trim(),
+    province: "เชียงใหม่",
+    open_time: $("#open_time").val().trim(),
+    close_time: $("#close_time").val().trim(),
+    contact: $("#contact").val().trim(),
+    map_link: $("#map_link").val().trim(),
+    latitude: $("#latitude").val().trim(),
+    longitude: $("#longitude").val().trim(),
+    image_url: $("#image_url").val().trim()
+  };
+
+  // 🧠 ตรวจสอบว่ากรอกครบทุกช่องสำคัญ
+  if (!data.name || !data.type || !data.amphoe || !data.tambon ||
+      !data.latitude || !data.longitude || !data.image_url) {
+    alert("⚠️ กรุณากรอกข้อมูลให้ครบทุกช่องที่จำเป็นก่อนบันทึก");
+    return;
+  }
+
+  // 🚀 ส่งข้อมูลไป insert.php
+  $.post("insert.php", data)
+    .done((res) => {
+      alert("✅ เพิ่มข้อมูลสำเร็จ!");
+
+      // ปิด modal และล้างค่า
+      $("#addModal").fadeOut(200);
+      $("#addModal input, #addModal textarea, #addModal select").val("");
+
+      // 🟢 เพิ่ม marker ใหม่โดยไม่ต้อง reload หน้า
+      const newFeature = {
+        type: "Feature",
+        geometry: {
+          type: "Point",
+          coordinates: [parseFloat(data.longitude), parseFloat(data.latitude)]
+        },
+        properties: data
+      };
+
+      // ✅ เพิ่มลงใน layer และ list
+      allData.features.push(newFeature);
+      tourismLayer.addData(newFeature);
+      renderList(allData.features);
+    })
+    .fail(() => alert("❌ เพิ่มข้อมูลไม่สำเร็จ โปรดตรวจสอบ insert.php"));
+});
+
+
+
+
+// ✅ ปุ่มยกเลิก: ปิด modal และล้างค่า input
+$(document).on("click", "#cancelNew", function() {
+  $("#addModal").fadeOut(200); // ปิดด้วยเอฟเฟกต์นุ่มๆ
+  // ล้างข้อมูลทั้งหมดในฟอร์ม
+  $("#addModal input, #addModal textarea, #addModal select").val("");
+});
+
+// ✅ Autocomplete ตำบล จังหวัดเชียงใหม่ (พิมพ์ชื่อได้เลย)
+const allTambon = [
+  "ช้างเผือก","สุเทพ","แม่เหียะ","หนองหอย","ท่าศาลา","ฟ้าฮ่าม","สันทราย","ป่าแดด",
+  "ป่าตัน","วัดเกต","แม่แรม","แม่สา","ดอนแก้ว","เหมืองแก้ว","สันโป่ง","แม่ริม","ห้วยทราย",
+  "สันทรายน้อย","สันทรายหลวง","สันพระเนตร","หนองจ๊อม","แม่แฝก","แม่แฝกใหม่","เมืองเล็น",
+  "แม่แตง","ป่าไผ่","ช่อแล","ขี้เหล็ก","สบเปิง","บ้านเป้า","บ้านหลวง","บ้านปง",
+  "หางดง","น้ำแพร่","หนองควาย","สันผักหวาน","บ้านแหวน","หารแก้ว","ขุนคง","บ้านปง",
+  "แม่วิน","บ้านแปะ","แม่สอย","ขุนกลาง","ขุนวาง","บ้านหลวง","สบเตี๊ยะ","ดอยแก้ว",
+  "บ้านจันทร์","แม่แดด","แม่ทา","ทากาศ","ศรีเตี้ย","บ่อหลวง","ท่าตอน","แม่สูน","แม่คะ",
+  "โป่งน้ำร้อน","สันป่าตอง","ยางเนิ้ง","ท่าวังตาล","มะขามหลวง","น้ำบ่อหลวง","แม่ขะปู",
+  "บ้านโฮ่ง","หนองล่อง","แม่หอพระ","ทุ่งหลวง","สันทรายกลาง","หนองหาร","สันนาเม็ง","บ้านฟ่อน"
+];
+
+$("#tambonSelect").autocomplete({
+  source: allTambon,
+  minLength: 1,
+  delay: 100,
+  classes: { "ui-autocomplete": "autocomplete-menu" }
+});
+
+// 🌧️========================
+// API: ThaiWater — ฝน 24 ชม. 
+// ========================
+
+// สร้างเลเยอร์เปล่าไว้ก่อน
+// 🌧️💧 ThaiWater API — Chiang Mai rainfall + waterlevel
+var rainLayer = L.layerGroup();
+layerControl.addOverlay(rainLayer, "🌦️ ปริมาณฝน 24 ชม.");
+
+// ใช้ $.ajax แบบเดิม ปลอดภัยกว่า fetch
+function loadThaiWaterData() {
+  rainLayer.clearLayers();
+
+  // -------- ฝน 24 ชม. --------
+  $.ajax({
+    url: "https://api-v3.thaiwater.net/api/v1/thaiwater30/public/rain_24h",
+    dataType: "json",
+    success: function(resp) {
+      if (!resp || !resp.data) return;
+      resp.data.forEach(function(rec) {
+        const province = rec.geocode?.province_name?.th || "";
+        if (!province.includes("เชียงใหม่")) return;
+
+        const st = rec.station || {};
+        const lat = parseFloat(st.tele_station_lat);
+        const lon = parseFloat(st.tele_station_long);
+        if (!isFinite(lat) || !isFinite(lon)) return;
+
+        const mm = parseFloat(rec.rain_24h || 0);
+        const bg = mm > 100 ? "#004d40" :
+                   mm > 50  ? "#00796b" :
+                   mm > 20  ? "#26a69a" :
+                   mm > 0   ? "#80cbc4" : "#cfd8dc";
+
+        const popup = `
+          <div style="font-family:'Prompt',sans-serif;">
+            <b>📍 สถานี:</b> ${st.tele_station_name?.th || "-"}<br>
+            🌧️ <b>ฝน 24 ชม.:</b> ${mm.toFixed(1)} มม.<br>
+            🕒 <b>เวลา:</b> ${(rec.rainfall_datetime || "-").replace("T"," ").slice(0,19)}
+          </div>`;
+
+        const iconHtml = `<div style="background:${bg};width:28px;height:28px;border-radius:50%;color:#fff;font-weight:bold;display:flex;align-items:center;justify-content:center;">${Math.round(mm)}</div>`;
+
+        L.marker([lat, lon], {
+          icon: L.divIcon({ html: iconHtml, className: "", iconSize:[30,30], iconAnchor:[15,15] })
+        }).bindPopup(popup).addTo(rainLayer);
+      });
+    }
+  });
+
+}
+
+// ==============================
+// 🌦️ สร้าง Legend ของปริมาณฝน 24 ชม.
+// ==============================
+const rainLegend = L.control({ position: "bottomright" });
+
+rainLegend.onAdd = function(map) {
+  const div = L.DomUtil.create("div", "info legend");
+  const grades = [0, 10, 30, 50, 70, 100, 150];
+  const labels = ["0–10", "10–30", "30–50", "50–70", "70–100", "100–150", "150+"];
+
+  div.innerHTML = `
+    <h4 style="margin:0 0 4px 0;text-align:center;font-family:'Prompt',sans-serif;
+                font-weight:600;color:var(--royalblue);">🌧️ ปริมาณฝน 24 ชม. (มม.)</h4>
+  `;
+
+  for (let i = 0; i < grades.length; i++) {
+    div.innerHTML += `
+      <i style="background:${getRainColor(grades[i] + 1)};
+                width:18px;height:18px;display:inline-block;
+                margin-right:6px;border-radius:4px;border:1px solid #999;"></i>
+      ${labels[i]}<br>
+    `;
+  }
+
+  return div;
+};
+
+// ✅ ฟังก์ชันคำนวณสี (ใช้เหมือน marker)
+function getRainColor(mm) {
+  return mm > 150 ? "#004d40" :
+         mm > 100 ? "#00796b" :
+         mm > 70  ? "#26a69a" :
+         mm > 50  ? "#4db6ac" :
+         mm > 30  ? "#80cbc4" :
+         mm > 10  ? "#b2dfdb" : "#e0f2f1";
+}
+
+// ==============================
+// 🎯 แสดง/ซ่อน Legend ตามชั้นข้อมูลฝน
+// ==============================
+map.on("overlayadd", function(e) {
+  if (e.name === "🌦️ ปริมาณฝน 24 ชม.") {
+    rainLegend.addTo(map);
+  }
+});
+
+map.on("overlayremove", function(e) {
+  if (e.name === "🌦️ ปริมาณฝน 24 ชม.") {
+    map.removeControl(rainLegend);
+  }
+});
+
+
+// โหลดครั้งแรก + อัปเดตทุก 30 นาที
+loadThaiWaterData();
+setInterval(loadThaiWaterData, 1800000);
+
+function goToStudent() {
+  window.location.href = "student.html";
+}
+function goToAbout() {
+  window.location.href = "about.html";
+}
+function logout() {
+  window.location.href = "login.html";
+}
+function goToLocalBiz() {
+  window.location.href = "localbiz_chiangmai.html";
+}
+
+
+</script>
+</body>
+</html>

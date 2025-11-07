@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>🌊 แนะนำตัว | ระบบจัดการข้อมูลนิสิต AGI</title>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --gold: #f8d77b;
+  --aqua: #9de5ff;
+  --text-light: #fefefe;
+}
+
+/* 🌊 พื้นหลังทะเล */
+body {
+  margin: 0;
+  font-family: "Prompt", sans-serif;
+  color: var(--text-light);
+  background: #00111f;
+  overflow-x: hidden;
+}
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image:
+    radial-gradient(circle at 50% 20%, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.85) 70%),
+    url("data/images/f3879c87af9c74f18fb40d33d62ee3b4.jpg");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  animation: oceanMove 55s ease-in-out infinite alternate;
+  z-index: -2;
+}
+@keyframes oceanMove {
+  0% { background-position: center center; transform: scale(1); }
+  50% { background-position: center top; transform: scale(1.04); }
+  100% { background-position: center bottom; transform: scale(1); }
+}
+body::after {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(120deg,
+    rgba(255,255,255,0.08) 0%,
+    rgba(255,255,255,0.02) 50%,
+    rgba(255,255,255,0.1) 100%);
+  mix-blend-mode: overlay;
+  animation: shimmer 10s ease-in-out infinite alternate;
+  z-index: -1;
+}
+@keyframes shimmer {
+  0% { opacity: 0.3; transform: translateY(0); }
+  50% { opacity: 0.5; transform: translateY(20px); }
+  100% { opacity: 0.3; transform: translateY(0); }
+}
+
+/* HEADER */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(0,0,0,0.4);
+  border-bottom: 2px solid var(--gold);
+  color: var(--gold);
+  padding: 12px 25px;
+  font-size: 18px;
+  font-weight: 600;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 3px 20px rgba(255,255,255,0.05);
+}
+#headerRight {
+  display: flex;
+  gap: 12px;
+}
+#headerRight button {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 10px;
+  color: #fff;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+#headerRight button:hover {
+  background: var(--gold);
+  color: #00111f;
+  transform: translateY(-2px);
+}
+
+/* =============================== */
+/* SECTION: กล่องซ้ายขวา */
+.intro-container {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: 40px;
+  max-width: 1200px;
+  margin: 100px auto;
+}
+
+/* กล่องแต่ละฝั่ง */
+.box {
+  flex: 1;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 22px;
+  padding: 40px;
+  box-shadow: 0 0 25px rgba(248,215,123,0.15);
+  backdrop-filter: blur(10px);
+  transition: 0.3s;
+}
+.box:hover {
+  box-shadow: 0 0 40px rgba(157,229,255,0.3);
+}
+
+/* ----------------------------- */
+/* กล่องซ้าย: โปรไฟล์ + ข้อความ */
+.intro-left {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.profile-section {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  margin-bottom: 25px;
+}
+.main-photo {
+  width: 130px;
+  height: 130px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid var(--gold);
+  box-shadow: 0 0 25px rgba(248,215,123,0.4);
+  transition: 0.3s;
+}
+.main-photo:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 35px rgba(157,229,255,0.6);
+}
+.profile-info h1 {
+  color: var(--gold);
+  font-size: 28px;
+  margin: 0 0 8px 0;
+}
+.profile-info h3 {
+  color: var(--aqua);
+  font-weight: 400;
+  margin: 0;
+}
+.intro-left p {
+  line-height: 1.8;
+  color: #f0f0f0;
+  font-size: 15px;
+  text-align: justify;
+  margin-top: 15px;
+}
+.socials {
+  margin-top: 20px;
+}
+.socials a {
+  text-decoration: none;
+  color: #9de5ff;
+  font-weight: 600;
+  margin-right: 12px;
+  transition: 0.3s;
+}
+.socials a:hover {
+  color: var(--gold);
+  text-shadow: 0 0 10px rgba(248,215,123,0.4);
+}
+
+/* ----------------------------- */
+/* กล่องขวา: รูปกิจกรรม */
+.intro-right h2 {
+  color: var(--gold);
+  text-align: center;
+  margin-bottom: 20px;
+}
+.photo-gallery {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+.photo-gallery img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 15px;
+  border: 2px solid rgba(255,255,255,0.3);
+  box-shadow: 0 0 15px rgba(0,0,0,0.4);
+  transition: 0.3s ease;
+  cursor: pointer;
+}
+.photo-gallery img:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 25px rgba(157,229,255,0.5);
+  border-color: var(--gold);
+}
+
+/* 📱 Responsive */
+@media (max-width: 900px) {
+  .intro-container {
+    flex-direction: column;
+  }
+  .profile-section {
+    flex-direction: column;
+    text-align: center;
+  }
+  .photo-gallery img {
+    width: 100px;
+    height: 100px;
+  }
+}
+
+/* FOOTER */
+footer {
+  text-align: center;
+  margin-top: 80px;
+  padding: 15px;
+  font-size: 14px;
+  color: var(--aqua);
+  background: rgba(0,0,0,0.4);
+  border-top: 2px solid var(--gold);
+  backdrop-filter: blur(4px);
+  text-shadow: 0 0 6px rgba(157,229,255,0.3);
+}
+</style>
+</head>
+
+<body>
+<header>
+  <div>📘 แนะนำตัว</div>
+  <div id="headerRight">
+    <button onclick="goToStudent()">🧭 ระบบนิสิต</button>
+    <button onclick="goToTour()">🏝️ สถานที่ท่องเที่ยว</button>
+    <button onclick="logout()">🚪 ออกจากระบบ</button>
+  </div>
+</header>
+
+<!-- กล่องหลัก -->
+<main class="intro-container">
+
+  <!-- กล่องซ้าย -->
+  <div class="intro-left box">
+    <div class="profile-section">
+      <img src="data\images\S__124665927_0.jpg" alt="profile photo" class="main-photo">
+      <div class="profile-info">
+        <h1>พัทนันทน์ เกตุยอด ( ไกด์ )</h1>
+        <h3>นักศึกษาชั้นปีที่ 3 | สาขาภูมิศาสตร์ | มหาวิทยาลัยนเรศวร</h3>
+      </div>
+    </div>
+<p> 
+ฉันเกิดวันที่ 10 สิงหาคม 2547 อายุ 21 ปี ฉันเป็นคนชอบเรียนรู้สิ่งใหม่ ๆ โดยเฉพาะเรื่องเทคโนโลยีและสิ่งรอบตัว  
+นอกจากการเรียนแล้ว ฉันก็สนใจการท่องเที่ยว ถ่ายรูป ฟังเพลง อ่านหนังสือ ดูหนัง ชอบดูธรรมชาติ และทำกิจกรรมกับเพื่อน ๆ ด้วยค่ะ 
+</p>
+
+
+    <div class="socials">
+      <a href="mailto:pathananketyod@gmail.com"> Email</a>
+      <a href="https://www.facebook.com/pathanan.ketyod.2025?mibextid=wwXIfr" target="_blank">facebook.com/pathanan</a>
+      <a href="https://www.instagram.com/gupxxw?igsh=MTUycWo4aXljNXczNQ%3D%3D&utm_source=qr" target="_blank" target="_blank">@gupxxw</a>
+    </div>
+  </div>
+
+  <!-- กล่องขวา -->
+  <div class="intro-right box">
+    <h2>📸 กิจกรรม & ภาคสนาม</h2>
+    <div class="photo-gallery">
+      <img src="data\images\111.jpg" alt="กิจกรรม 1">
+      <img src="data\images\222.jpg" alt="กิจกรรม 2">
+      <img src="data\images\333.jpg" alt="กิจกรรม 3">
+      <img src="data\images\444.jpg" alt="กิจกรรม 4">
+      <img src="data\images\555.jpg" alt="กิจกรรม 5">
+
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  © 2025 ระบบจัดการข้อมูลนิสิต AGI | พัฒนาโดย พัทนันทน์ เกตุยอด
+</footer>
+
+<script>
+function goToStudent() { window.location.href = "student.html"; }
+function goToTour() { window.location.href = "chiangmai_map.html"; }
+function logout() { 
+  if (confirm("คุณต้องการออกจากระบบหรือไม่?")) {
+    window.location.href = "login.html"; 
+  }
+}
+</script>
+
+<div id="imageModal" class="modal">
+  <span class="close">&times;</span>
+  <img class="modal-content" id="modalImage">
+  <div id="caption"></div>
+</div>
+<style>
+/* 💡 พื้นหลังตอนกดรูป */
+.modal {
+  display: none; 
+  position: fixed; 
+  z-index: 9999; 
+  padding-top: 80px; 
+  left: 0;
+  top: 0;
+  width: 100%; 
+  height: 100%; 
+  overflow: auto; 
+  background-color: rgba(0,0,0,0.8);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}
+
+/* 🔍 ตัวรูปขยาย */
+.modal-content {
+  margin: auto;
+  display: block;
+  max-width: 85%;
+  max-height: 80vh;
+  border-radius: 20px;
+  box-shadow: 0 0 40px rgba(248,215,123,0.4);
+  animation: zoomIn 0.3s ease;
+}
+@keyframes zoomIn {
+  from {transform: scale(0.8); opacity: 0;}
+  to {transform: scale(1); opacity: 1;}
+}
+
+/* ✨ คำบรรยายใต้รูป */
+#caption {
+  margin: 20px auto;
+  text-align: center;
+  color: #fefefe;
+  font-size: 16px;
+}
+
+/* ❌ ปุ่มปิด */
+.close {
+  position: absolute;
+  top: 25px;
+  right: 35px;
+  color: #fff;
+  font-size: 40px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.close:hover {
+  color: var(--gold);
+  transform: scale(1.2);
+}
+</style>
+
+<script>
+// 🎯 เมื่อคลิกภาพในแกลเลอรี → เปิด modal
+const modal = document.getElementById("imageModal");
+const modalImg = document.getElementById("modalImage");
+const captionText = document.getElementById("caption");
+const images = document.querySelectorAll(".photo-gallery img");
+
+images.forEach(img => {
+  img.addEventListener("click", function() {
+    modal.style.display = "block";
+    modalImg.src = this.src;
+    captionText.innerHTML = this.alt;
+  });
+});
+
+// ❌ ปุ่มปิด modal
+document.querySelector(".close").onclick = function() {
+  modal.style.display = "none";
+};
+
+// ✨ ปิด modal เมื่อคลิกพื้นหลัง
+modal.onclick = function(event) {
+  if (event.target === modal) {
+    modal.style.display = "none";
+  }
+};
+</script>
+</body>
+</html>

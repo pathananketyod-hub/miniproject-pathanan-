@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>เข้าสู่ระบบ | ระบบจัดการข้อมูลนิสิต AGI</title>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+* { box-sizing: border-box; font-family: "Prompt", sans-serif; }
+
+body {
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* 🌊 พื้นหลังแมงกะพรุน */
+  background: url("data/images/4842c295006e67c08b137cb3c3454800.jpg") no-repeat center center fixed;
+background-size: cover;
+
+  position: relative;
+  overflow: hidden;
+}
+
+/* เพิ่มเลเยอร์มืดบาง ๆ ให้ตัวหนังสืออ่านง่าย */
+body::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 30, 0.55);
+  backdrop-filter: blur(2px);
+}
+
+.container {
+  position: relative;
+  background: rgba(255, 255, 255, 0.88);
+  width: 400px;
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+  text-align: center;
+  z-index: 1;
+}
+
+h1 { color: #0b5394; font-size: 22px; margin-bottom: 25px; }
+.input-group { margin-bottom: 18px; text-align: left; }
+label { display: block; margin-bottom: 6px; color: #333; font-size: 14px; }
+input {
+  width: 100%; padding: 10px 12px; border: 1px solid #ccc;
+  border-radius: 10px; font-size: 14px; outline: none;
+}
+input:focus { border-color: #0b5394; box-shadow: 0 0 4px rgba(11,83,148,0.4); }
+
+button {
+  width: 100%; background: #0b5394; color: white; padding: 12px;
+  border: none; border-radius: 10px; font-size: 16px; cursor: pointer;
+  transition: 0.3s;
+}
+button:hover { background: #083b70; }
+
+.toggle-link {
+  display: block; margin-top: 12px; font-size: 13px;
+  color: #0b5394; cursor: pointer; text-decoration: underline;
+}
+
+footer {
+  position: absolute; bottom: 10px; width: 100%;
+  text-align: center; font-size: 12px; color: #eee;
+  z-index: 1;
+}
+
+.success { color: green; font-size: 14px; margin-bottom: 10px; }
+.error { color: red; font-size: 14px; margin-bottom: 10px; }
+
+/* 🌊 เอฟเฟกต์น้ำเคลื่อนไหวเบา ๆ */
+@keyframes driftBackground {
+  0% { background-position: center; }
+  50% { background-position: center 10px; }
+  100% { background-position: center; }
+}
+body {
+  animation: driftBackground 12s ease-in-out infinite;
+}
+
+/* 🫧 ฟองอากาศลอยขึ้น */
+.bubble {
+  position: absolute;
+  bottom: -50px;
+  background: rgba(255,255,255,0.5);
+  border-radius: 50%;
+  animation: rise 10s infinite ease-in;
+  opacity: 0.7;
+}
+
+@keyframes rise {
+  0% { transform: translateY(0) scale(0.6); opacity: 0.7; }
+  80% { opacity: 0.9; }
+  100% { transform: translateY(-110vh) scale(1); opacity: 0; }
+}
+
+</style>
+</head>
+
+<body>
+  <div class="container">
+    <h1 id="formTitle">เข้าสู่ระบบ</h1>
+    <div id="message"></div>
+
+    <form id="loginForm">
+      <div class="input-group">
+        <label>ชื่อผู้ใช้ (Username)</label>
+        <input type="text" id="username" required>
+      </div>
+      <div class="input-group">
+        <label>รหัสผ่าน (Password)</label>
+        <input type="password" id="password" required>
+      </div>
+      <button type="submit" id="submitBtn">เข้าสู่ระบบ</button>
+    </form>
+
+    <span class="toggle-link" id="toggleForm">ยังไม่มีบัญชี? สมัครสมาชิก</span>
+  </div>
+
+
+  <script>
+  const form = document.getElementById("loginForm");
+  const toggle = document.getElementById("toggleForm");
+  const message = document.getElementById("message");
+  const title = document.getElementById("formTitle");
+  const submitBtn = document.getElementById("submitBtn");
+
+  let isLogin = true;
+
+  toggle.addEventListener("click", () => {
+    isLogin = !isLogin;
+    message.textContent = "";
+    if (isLogin) {
+      title.textContent = "เข้าสู่ระบบ";
+      submitBtn.textContent = "เข้าสู่ระบบ";
+      toggle.textContent = "ยังไม่มีบัญชี? สมัครสมาชิก";
+    } else {
+      title.textContent = "สมัครสมาชิก";
+      submitBtn.textContent = "สมัครสมาชิก";
+      toggle.textContent = "มีบัญชีแล้ว? กลับไปเข้าสู่ระบบ";
+    }
+  });
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const user = document.getElementById("username").value.trim();
+    const pass = document.getElementById("password").value.trim();
+
+    if (!user || !pass) {
+      message.innerHTML = '<div class="error">⚠️ กรุณากรอกข้อมูลให้ครบ</div>';
+      return;
+    }
+
+    let users = JSON.parse(localStorage.getItem("agi_users") || "{}");
+
+    if (isLogin) {
+      if (users[user] && users[user] === pass) {
+        message.innerHTML = '<div class="success">✅ เข้าสู่ระบบสำเร็จ!</div>';
+        setTimeout(() => {
+          alert("ยินดีต้อนรับ " + user + " !");
+          window.location.href = "student.html";
+        }, 800);
+      } else {
+        message.innerHTML = '<div class="error">❌ ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง</div>';
+      }
+    } else {
+      if (users[user]) {
+        message.innerHTML = '<div class="error">⚠️ ชื่อผู้ใช้นี้มีอยู่แล้ว</div>';
+      } else {
+        users[user] = pass;
+        localStorage.setItem("agi_users", JSON.stringify(users));
+        message.innerHTML = '<div class="success">✅ สมัครสมาชิกสำเร็จ! โปรดเข้าสู่ระบบ</div>';
+        setTimeout(() => { toggle.click(); }, 1000);
+      }
+    }
+  });
+  </script>
+
+  <script>
+for (let i = 0; i < 10; i++) {
+  const b = document.createElement('div');
+  b.classList.add('bubble');
+  const size = Math.random() * 40 + 10; // ขนาดฟอง
+  b.style.width = b.style.height = size + 'px';
+  b.style.left = Math.random() * 100 + 'vw';
+  b.style.animationDuration = (6 + Math.random() * 8) + 's';
+  b.style.animationDelay = (Math.random() * 5) + 's';
+  document.body.appendChild(b);
+}
+</script>
+
+</body>
+</html>

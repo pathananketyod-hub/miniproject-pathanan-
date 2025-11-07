@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ธุรกิจท้องถิ่นเชียงใหม่ • Local Businesses</title>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f7f8fb; --card:#fff; --ink:#13223a; --muted:#5b6b88;
+    --pri:#3553ff; --pri2:#7aa2ff; --line:#e6e8ee; --chip:#eef2ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);font-family:"Prompt",system-ui,sans-serif;color:var(--ink)}
+  .wrap{max-width:1100px;margin:40px auto;padding:0 20px}
+  header{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+  header h1{font-size:22px;margin:0;font-weight:600}
+  .sub{color:var(--muted);font-size:14px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;position:sticky;top:0;z-index:5;backdrop-filter:saturate(180%) blur(6px)}
+  .panel input,.panel select{height:40px;border:1px solid var(--line);border-radius:10px;padding:0 12px;background:#fff;color:var(--ink)}
+  .panel input{flex:1 1 260px}
+  .panel select{flex:1 1 180px}
+  .btn{height:40px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer}
+  .btn.pri{background:var(--pri);color:#fff;border-color:var(--pri)}
+  .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;margin-top:16px}
+  .card{grid-column:span 12;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;gap:14px;align-items:flex-start;transition:transform .12s ease, box-shadow .12s ease}
+  .card:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(0,0,0,.06)}
+  @media(min-width:640px){.card{grid-column:span 6}}
+  @media(min-width:980px){.card{grid-column:span 4}}
+  .badge{display:inline-flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .chip{background:var(--chip);border:1px solid var(--line);padding:4px 8px;border-radius:999px;font-size:12px;color:var(--muted)}
+  .title{font-size:16px;font-weight:600;margin:0 0 6px 0}
+  .muted{color:var(--muted);font-size:13px;margin:2px 0}
+  .star{font-weight:600}
+  .controls{display:flex;justify-content:space-between;align-items:center;margin-top:10px;color:var(--muted);font-size:14px}
+  .pager{display:flex;gap:8px;align-items:center}
+  .pager button{height:36px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer}
+  .pager .num{padding:6px 10px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer}
+  .pager .num.active{background:var(--pri);border-color:var(--pri);color:#fff}
+  .empty{padding:28px;border:1px dashed var(--line);border-radius:14px;background:#fff;text-align:center;color:var(--muted)}
+  .hint{font-size:12px;color:var(--muted)}
+  /* ปุ่มกลับ */
+.back-btn {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  background: var(--pri);
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  padding: 10px 18px;
+  font-family: "Prompt";
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+  transition: all 0.25s ease;
+  z-index: 10;
+}
+.back-btn:hover {
+  background: var(--pri2);
+  transform: translateY(-2px);
+}
+
+/* 🌅 พื้นหลังภาพ */
+body {
+  margin: 0;
+  font-family: "Prompt", system-ui, sans-serif;
+  color: var(--ink);
+  background: #00111f url("data/images/e7fcbcf05bc59b899fb39440e6fa8ceb.jpg") no-repeat center center fixed;
+  background-size: cover;
+  position: relative;
+}
+
+/* ชั้นกรองมืดบางๆ เพื่อให้อ่านตัวหนังสือชัดขึ้น */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(3px);
+  z-index: -1;
+}
+
+</style>
+</head>
+<body>
+      <button class="back-btn" onclick="window.location.href='chiangmai_map.html'">← กลับหน้าสถานที่ท่องเที่ยว</button>
+
+  <div class="wrap">
+    <header>
+      <h1>ธุรกิจท้องถิ่นเชียงใหม่</h1>
+    </header>
+
+    <div class="panel">
+      <input id="q" type="search" placeholder="ค้นหาชื่อร้าน / จุดเด่น / หมวด…" />
+      <select id="cat">
+        <option value="">ทุกหมวด</option>
+      </select>
+      <select id="dist">
+        <option value="">ทุกอำเภอ</option>
+      </select>
+      <select id="sort">
+        <option value="name-asc">เรียงชื่อ (A→Z)</option>
+        <option value="name-desc">เรียงชื่อ (Z→A)</option>
+        <option value="rating-desc">เรตติ้งสูง→ต่ำ</option>
+        <option value="rating-asc">เรตติ้งต่ำ→สูง</option>
+        <option value="year-asc">ปีเก่า→ใหม่</option>
+        <option value="year-desc">ปีใหม่→เก่า</option>
+      </select>
+      <button class="btn" id="resetBtn">ล้างตัวกรอง</button>
+      <label class="hint">หรือเลือกไฟล์ JSON ของคุณเอง: <input id="file" type="file" accept=".json" /></label>
+    </div>
+
+    <div class="controls">
+      <div><span id="count">0</span> รายการ</div>
+      <div class="pager" id="pager"></div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+
+  </div>
+
+<script>
+/** ===== Settings ===== **/
+const JSON_PATH = 'chiangmai_localbusiness.json'; // เปลี่ยน path ได้ตามโครงสร้างโปรเจกต์ของคุณ
+const PAGE_SIZE = 12;
+
+/** ===== State ===== **/
+let raw = [];
+let view = [];
+let page = 1;
+
+/** ===== Utils ===== **/
+const uniq = arr => [...new Set(arr.filter(Boolean))];
+const el = id => document.getElementById(id);
+
+function normalize(str){ return (str||'').toString().toLowerCase().trim(); }
+
+function applyFilters(){
+  const q = normalize(el('q').value);
+  const cat = normalize(el('cat').value);
+  const dist = normalize(el('dist').value);
+  const sort = el('sort').value;
+
+  view = raw.filter(r=>{
+    const inQ = !q || [r.shop_name, r.famous_for, r.category, r.district].some(v => normalize(v).includes(q));
+    const inCat = !cat || normalize(r.category) === cat;
+    const inDist = !dist || normalize(r.district) === dist;
+    return inQ && inCat && inDist;
+  });
+
+  // sort
+  const keyers = {
+    'name-asc': (a,b)=> normalize(a.shop_name).localeCompare(normalize(b.shop_name)),
+    'name-desc': (a,b)=> normalize(b.shop_name).localeCompare(normalize(a.shop_name)),
+    'rating-desc': (a,b)=> (b.rating??0) - (a.rating??0),
+    'rating-asc': (a,b)=> (a.rating??0) - (b.rating??0),
+    'year-asc': (a,b)=> (a.founded_year??0) - (b.founded_year??0),
+    'year-desc': (a,b)=> (b.founded_year??0) - (a.founded_year??0),
+  };
+  view.sort(keyers[sort] || keyers['name-asc']);
+
+  // reset page if out of range
+  const maxPage = Math.max(1, Math.ceil(view.length / PAGE_SIZE));
+  if(page > maxPage) page = 1;
+
+  render();
+}
+
+function render(){
+  el('count').textContent = view.length.toLocaleString('th-TH');
+
+  // pager
+  const total = Math.ceil(view.length / PAGE_SIZE) || 1;
+  const pager = el('pager');
+  pager.innerHTML = '';
+  const prev = document.createElement('button');
+  prev.textContent = '‹';
+  prev.disabled = page<=1;
+  prev.onclick = ()=>{ page = Math.max(1, page-1); render(); };
+  pager.appendChild(prev);
+
+  for(let i=1;i<=total;i++){
+    if (i===1 || i===total || Math.abs(i-page)<=1){
+      const n = document.createElement('span');
+      n.className = 'num'+(i===page?' active':'');
+      n.textContent = i;
+      n.onclick = ()=>{ page=i; render(); };
+      pager.appendChild(n);
+    } else if ( (i===2 && page>3) || (i===total-1 && page<total-2) ){
+      const dots = document.createElement('span');
+      dots.className = 'num';
+      dots.style.cursor='default';
+      dots.textContent = '…';
+      pager.appendChild(dots);
+    }
+  }
+
+  const next = document.createElement('button');
+  next.textContent = '›';
+  next.disabled = page>=total;
+  next.onclick = ()=>{ page = Math.min(total, page+1); render(); };
+  pager.appendChild(next);
+
+  // grid
+  const grid = el('grid');
+  grid.innerHTML = '';
+  if(view.length===0){
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">ไม่พบข้อมูลที่ตรงกับตัวกรอง/คำค้น</div>`;
+    return;
+  }
+
+  const start = (page-1)*PAGE_SIZE;
+  const slice = view.slice(start, start+PAGE_SIZE);
+
+  for(const b of slice){
+    const card = document.createElement('div');
+    card.className='card';
+    card.innerHTML = `
+      <div style="flex:1">
+        <h3 class="title">${b.shop_name || '-'}</h3>
+        <p class="muted">${b.famous_for || ''}</p>
+        <div class="badge">
+          <span class="chip">หมวด: ${b.category || '-'}</span>
+          <span class="chip">อำเภอ: ${b.district || '-'}</span>
+          <span class="chip">⭐ <span class="star">${(b.rating??'-')}</span></span>
+          <span class="chip">ตั้งแต่ปี ${b.founded_year ?? '-'}</span>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  }
+}
+
+function buildFilters(){
+  const cats = uniq(raw.map(r=>r.category).map(normalize)).sort();
+  const dists = uniq(raw.map(r=>r.district).map(normalize)).sort();
+
+  const catSel = el('cat'); const distSel = el('dist');
+  for(const c of cats){ const o=document.createElement('option'); o.value=c; o.textContent=c?c.replace(/\b\w/g,m=>m.toUpperCase()):''; catSel.appendChild(o); }
+  for(const d of dists){ const o=document.createElement('option'); o.value=d; o.textContent=d?d.replace(/\b\w/g,m=>m.toUpperCase()):''; distSel.appendChild(o); }
+}
+
+async function loadDefault(){
+  try{
+    const res = await fetch(JSON_PATH, {cache:'no-store'});
+    if(!res.ok) throw new Error('Fetch failed');
+    raw = await res.json();
+    page = 1;
+    buildFilters();
+    applyFilters();
+  }catch(e){
+    // แสดงตัวอย่าง/วิธีใช้เมื่อโหลดไฟล์ไม่ได้
+    el('grid').innerHTML = `
+      <div class="empty" style="grid-column:1/-1">
+        ไม่พบไฟล์ <code>${JSON_PATH}</code> โปรดวางไฟล์ไว้โฟลเดอร์เดียวกับหน้านี้
+        <div style="margin-top:8px">หรือเลือกไฟล์ของคุณผ่านช่องเลือกไฟล์ด้านบน</div>
+      </div>`;
+  }
+}
+
+/** ===== Listeners ===== **/
+['q','cat','dist','sort'].forEach(id => el(id).addEventListener('input', ()=>{ page=1; applyFilters(); }));
+el('resetBtn').addEventListener('click', ()=>{
+  el('q').value=''; el('cat').value=''; el('dist').value=''; el('sort').value='name-asc'; page=1; applyFilters();
+});
+el('file').addEventListener('change', async (e)=>{
+  const f = e.target.files?.[0];
+  if(!f) return;
+  try{
+    const text = await f.text();
+    const json = JSON.parse(text);
+    raw = Array.isArray(json) ? json : (json.data || []);
+    // reset filters
+    el('q').value=''; el('cat').innerHTML='<option value="">ทุกหมวด</option>'; el('dist').innerHTML='<option value="">ทุกอำเภอ</option>'; el('sort').value='name-asc';
+    page=1;
+    buildFilters();
+    applyFilters();
+  }catch(err){
+    alert('ไม่สามารถอ่านไฟล์ JSON นี้ได้');
+  }
+});
+
+/** ===== Init ===== **/
+loadDefault();
+</script>
+</body>
+</html>
